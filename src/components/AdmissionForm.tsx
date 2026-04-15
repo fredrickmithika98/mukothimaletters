@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { type Grade, type CourseInfo, type ApplicantData, type AdmissionResult, getAllGrades, getEligibleCourses, evaluateAdmission } from "@/lib/admission-logic";
 import { generateAdmissionLetter } from "@/lib/generate-pdf";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,6 +60,18 @@ export function AdmissionForm() {
       phoneNumber: phoneNumber.trim(),
       meanGrade: meanGrade as Grade,
     };
+
+    // Log download to database
+    await supabase.from("admission_downloads").insert({
+      full_name: data.fullName,
+      index_number: data.indexNumber,
+      phone_number: data.phoneNumber,
+      course_name: result.courseName,
+      faculty: result.faculty,
+      category: result.category,
+      mean_grade: data.meanGrade,
+    });
+
     await generateAdmissionLetter(data, result);
   }
 

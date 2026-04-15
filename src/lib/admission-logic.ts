@@ -32,49 +32,77 @@ function isGradeAtLeast(grade: Grade, minimum: Grade): boolean {
 }
 
 const FACULTY_NAMES: Record<string, string> = {
-  FHSS: "Faculty of Humanities & Social Sciences",
-  FBUST: "Faculty of Business & Technology",
-  FPET: "Faculty of Pure & Engineering Technology",
-  FLIND: "Faculty of Liberal & Interdisciplinary Studies",
+  FHSS: "Faculty of Humanities and Social Sciences",
+  FBUS: "Faculty of Business Studies",
+  FPSET: "Faculty of Physical Sciences Engineering & Technology",
+  FLNS: "Faculty of Life Sciences and Natural Resources",
+  FEDU: "Faculty of Education",
+};
 };
 
 // Diploma courses (mean grade C or C-)
 const DIPLOMA_COURSES: CourseInfo[] = [
+  // Humanities & Social Sciences
   { name: "Diploma in Community Development", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
   { name: "Diploma in Criminology & Security Studies", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
   { name: "Diploma in Social Work", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
   { name: "Diploma in Disaster Management", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
-  { name: "Diploma in Leadership & Public Administration", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
+  { name: "Diploma in Leadership and Public Administration", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
   { name: "Diploma in Information Science", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
   { name: "Diploma in Journalism & Mass Communication", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
-  { name: "Diploma in Counselling Psychology", faculty: FACULTY_NAMES.FBUST, category: "Diploma" },
-  { name: "Diploma in Business Management", faculty: FACULTY_NAMES.FBUST, category: "Diploma" },
-  { name: "Diploma in Sales and Marketing", faculty: FACULTY_NAMES.FBUST, category: "Diploma" },
-  { name: "Diploma in Procurement & Logistics Management", faculty: FACULTY_NAMES.FBUST, category: "Diploma" },
-  { name: "Diploma in Insurance and Risk Management", faculty: FACULTY_NAMES.FBUST, category: "Diploma" },
-  { name: "Diploma in Accounting", faculty: FACULTY_NAMES.FBUST, category: "Diploma" },
-  { name: "Diploma in Project Planning & Management", faculty: FACULTY_NAMES.FPET, category: "Diploma" },
-  { name: "Diploma in Computer Science", faculty: FACULTY_NAMES.FPET, category: "Diploma" },
-  { name: "Diploma in Information Technology", faculty: FACULTY_NAMES.FLIND, category: "Diploma" },
-  { name: "Diploma in Health Records & Information Management", faculty: FACULTY_NAMES.FLIND, category: "Diploma" },
-  { name: "Diploma in Dryland Agriculture", faculty: FACULTY_NAMES.FLIND, category: "Diploma" },
+  { name: "Diploma in Counselling Psychology", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
+
+  // Business Studies
+  { name: "Diploma in Business Management", faculty: FACULTY_NAMES.FBUS, category: "Diploma" },
+  { name: "Diploma in Sales and Marketing", faculty: FACULTY_NAMES.FBUS, category: "Diploma" },
+  { name: "Diploma in Procurement & Logistics Management", faculty: FACULTY_NAMES.FBUS, category: "Diploma" },
+  { name: "Diploma in Insurance and Risk Management", faculty: FACULTY_NAMES.FBUS, category: "Diploma" },
+  { name: "Diploma in Accounting", faculty: FACULTY_NAMES.FBUS, category: "Diploma" },
+  { name: "Diploma in Human Resource Management", faculty: FACULTY_NAMES.FBUS, category: "Diploma" },
+
+  // Physical Sciences & Technology
+  { name: "Diploma in Computer Science", faculty: FACULTY_NAMES.FPSET, category: "Diploma" },
+  { name: "Diploma in Information Technology", faculty: FACULTY_NAMES.FPSET, category: "Diploma" },
+  { name: "Diploma in Project Planning & Management", faculty: FACULTY_NAMES.FPSET, category: "Diploma" },
+
+  // Life Sciences & Natural Resources
+  { name: "Diploma in Agriculture and Rural Development", faculty: FACULTY_NAMES.FLNS, category: "Diploma" },
+  { name: "Diploma in Tourism and Hotel Management", faculty: FACULTY_NAMES.FLNS, category: "Diploma" },
+  { name: "Diploma in Wildlife Management", faculty: FACULTY_NAMES.FLNS, category: "Diploma" },
+  { name: "Diploma in Agricultural Education & Extension", faculty: FACULTY_NAMES.FLNS, category: "Diploma" },
+  { name: "Diploma in Meat Science and Technology", faculty: FACULTY_NAMES.FLNS, category: "Diploma" },
+  { name: "Diploma in Farm Resources and Management", faculty: FACULTY_NAMES.FLNS, category: "Diploma" },
+  { name: "Diploma in Horticulture", faculty: FACULTY_NAMES.FLNS, category: "Diploma" },
+  { name: "Diploma in Dryland Agriculture", faculty: FACULTY_NAMES.FLNS, category: "Diploma" },
+
+  // Health
+  { name: "Diploma in Health Records & Information Management", faculty: FACULTY_NAMES.FLNS, category: "Diploma" },
 ];
 
-// Certificate courses (mean grade D+ or D)
-const CERTIFICATE_COURSES: CourseInfo[] = [
+/const CERTIFICATE_COURSES: CourseInfo[] = [
+  // Humanities & Social Sciences
   { name: "Certificate in Community Development", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
   { name: "Certificate in Criminology & Security Studies", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
   { name: "Certificate in Social Work", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
   { name: "Certificate in Disaster Management", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
-  { name: "Certificate in Leadership & Public Administration", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
+  { name: "Certificate in Leadership and Public Administration", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
   { name: "Certificate in National Cohesion, Values and Governance", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
-  { name: "Certificate in Business Management", faculty: FACULTY_NAMES.FBUST, category: "Certificate" },
-  { name: "Certificate in Procurement & Logistics", faculty: FACULTY_NAMES.FBUST, category: "Certificate" },
-  { name: "Certificate in Insurance & Risk Management", faculty: FACULTY_NAMES.FBUST, category: "Certificate" },
-  { name: "Certificate in Accounting", faculty: FACULTY_NAMES.FBUST, category: "Certificate" },
-  { name: "Certificate in Project Planning & Management", faculty: FACULTY_NAMES.FPET, category: "Certificate" },
-  { name: "Certificate in Computer Science", faculty: FACULTY_NAMES.FPET, category: "Certificate" },
-  { name: "Certificate in Information Technology", faculty: FACULTY_NAMES.FLIND, category: "Certificate" },
+
+  // Business Studies
+  { name: "Certificate in Business Management", faculty: FACULTY_NAMES.FBUS, category: "Certificate" },
+  { name: "Certificate in Procurement & Logistics Management", faculty: FACULTY_NAMES.FBUS, category: "Certificate" },
+  { name: "Certificate in Insurance & Risk Management", faculty: FACULTY_NAMES.FBUS, category: "Certificate" },
+  { name: "Certificate in Accounting", faculty: FACULTY_NAMES.FBUS, category: "Certificate" },
+  { name: "Certificate in Project Planning & Management", faculty: FACULTY_NAMES.FBUS, category: "Certificate" },
+
+  // ICT / Tech
+  { name: "Certificate in Computer Science", faculty: FACULTY_NAMES.FPSET, category: "Certificate" },
+  { name: "Certificate in Information Technology", faculty: FACULTY_NAMES.FPSET, category: "Certificate" },
+  { name: "Certificate in Computer Literacy/Packages", faculty: FACULTY_NAMES.FPSET, category: "Certificate" },
+
+  // Life Sciences / Hospitality
+  { name: "Certificate in Hospitality & Tourism Management", faculty: FACULTY_NAMES.FLNS, category: "Certificate" },
+  { name: "Certificate in Health Records & Information Management", faculty: FACULTY_NAMES.FLNS, category: "Certificate" },
 ];
 
 export function getEligibleCourses(meanGrade: Grade): CourseInfo[] {

@@ -51,7 +51,7 @@ export function AdmissionForm() {
     setResult(evaluateAdmission(data, course));
   }
 
-  function handleDownload() {
+  async function handleDownload() {
     if (!result?.eligible) return;
     const data: ApplicantData = {
       fullName: fullName.trim(),
@@ -59,7 +59,7 @@ export function AdmissionForm() {
       phoneNumber: phoneNumber.trim(),
       meanGrade: meanGrade as Grade,
     };
-    generateAdmissionLetter(data, result);
+    await generateAdmissionLetter(data, result);
   }
 
   function handleReset() {

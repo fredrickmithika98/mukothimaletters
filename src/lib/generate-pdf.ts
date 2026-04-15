@@ -50,8 +50,27 @@ function getCertificateFees(): { rows: FeeRow[]; regularTotal: [string, string];
   };
 }
 
-export function generateAdmissionLetter(applicant: ApplicantData, result: AdmissionResult): void {
+async function loadImageAsBase64(url: string): Promise<string> {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+export async function generateAdmissionLetter(applicant: ApplicantData, result: AdmissionResult): Promise<void> {
   const doc = new jsPDF();
+
+  // Load logo
+  let logoData: string | null = null;
+  try {
+    logoData = await loadImageAsBase64("/images/tharaka-logo.jpg");
+  } catch {
+    // Logo failed to load, continue without it
+  }
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
@@ -62,21 +81,29 @@ export function generateAdmissionLetter(applicant: ApplicantData, result: Admiss
   const semesters = isDiploma ? "four" : "TWO";
   const admissionFee = isDiploma ? "2,000" : "1,000";
 
-  // ===== HEADER =====
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
-  doc.setTextColor(0, 51, 102);
-  doc.text("THARAKA", pageWidth / 2 - 30, y);
-  doc.setFontSize(18);
-  doc.text("UNIVERSITY", pageWidth / 2 + 18, y);
-
-  y += 6;
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(80, 80, 80);
-  doc.text("P.O BOX 193-60215, MARIMANTI, KENYA", pageWidth / 2, y, { align: "center" });
-  y += 4;
-  doc.text("Website: https://tharaka.ac.ke  |  Email: info@tharaka.ac.ke", pageWidth / 2, y, { align: "center" });
+  // ===== HEADER WITH LOGO =====
+  if (logoData) {
+    // Add full-width logo header image (spans the content area)
+    const logoWidth = contentWidth;
+    const logoHeight = 22; // approximate aspect ratio
+    doc.addImage(logoData, "JPEG", margin, y - 5, logoWidth, logoHeight);
+    y += logoHeight + 3;
+  } else {
+    // Fallback text header if logo fails
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(0, 51, 102);
+    doc.text("THARAKA", pageWidth / 2 - 30, y);
+    doc.text("UNIVERSITY", pageWidth / 2 + 18, y);
+    y += 6;
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(80, 80, 80);
+    doc.text("P.O BOX 193-60215, MARIMANTI, KENYA", pageWidth / 2, y, { align: "center" });
+    y += 4;
+    doc.text("Website: https://tharaka.ac.ke  |  Email: info@tharaka.ac.ke", pageWidth / 2, y, { align: "center" });
+    y += 5;
+  }
 
   // Divider
   y += 5;

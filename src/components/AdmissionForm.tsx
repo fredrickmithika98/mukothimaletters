@@ -60,6 +60,18 @@ export function AdmissionForm() {
       phoneNumber: phoneNumber.trim(),
       meanGrade: meanGrade as Grade,
     };
+
+    // Log download to database
+    await supabase.from("admission_downloads").insert({
+      full_name: data.fullName,
+      index_number: data.indexNumber,
+      phone_number: data.phoneNumber,
+      course_name: result.courseName,
+      faculty: result.faculty,
+      category: result.category,
+      mean_grade: data.meanGrade,
+    });
+
     await generateAdmissionLetter(data, result);
   }
 

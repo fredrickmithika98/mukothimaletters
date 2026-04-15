@@ -50,8 +50,27 @@ function getCertificateFees(): { rows: FeeRow[]; regularTotal: [string, string];
   };
 }
 
-export function generateAdmissionLetter(applicant: ApplicantData, result: AdmissionResult): void {
+async function loadImageAsBase64(url: string): Promise<string> {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+export async function generateAdmissionLetter(applicant: ApplicantData, result: AdmissionResult): Promise<void> {
   const doc = new jsPDF();
+
+  // Load logo
+  let logoData: string | null = null;
+  try {
+    logoData = await loadImageAsBase64("/images/tharaka-logo.jpg");
+  } catch {
+    // Logo failed to load, continue without it
+  }
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;

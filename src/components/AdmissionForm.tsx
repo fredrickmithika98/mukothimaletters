@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type Grade, type ApplicantData, type AdmissionResult, getAllGrades, evaluateAdmission } from "@/lib/admission-logic";
+import { type Grade, type CourseInfo, type ApplicantData, type AdmissionResult, getAllGrades, getEligibleCourses, evaluateAdmission } from "@/lib/admission-logic";
 import { generateAdmissionLetter } from "@/lib/generate-pdf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,23 +10,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const grades = getAllGrades();
 
 export function AdmissionForm() {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    indexNumber: "",
-    phoneNumber: "",
-    meanGrade: "" as Grade | "",
-    biologyGrade: "" as Grade | "",
-  });
+  const [fullName, setFullName] = useState("");
+  const [indexNumber, setIndexNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [meanGrade, setMeanGrade] = useState<Grade | "">("");
+  const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [result, setResult] = useState<AdmissionResult | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const eligibleCourses = meanGrade ? getEligibleCourses(meanGrade as Grade) : [];
+  const category = eligibleCourses.length > 0 ? eligibleCourses[0].category : null;
+
+  // Group courses by faculty
+  const coursesByFaculty = eligibleCourses.reduce<Record<string, CourseInfo[]>>((acc, c) => {
+    (acc[c.faculty] ??= []).push(c);
+    return acc;
+  }, {});
+
   function validate(): boolean {
     const errs: Record<string, string> = {};
-    if (!formData.fullName.trim()) errs.fullName = "Full name is required";
-    if (!formData.indexNumber.trim()) errs.indexNumber = "Index number is required";
-    if (!formData.phoneNumber.trim()) errs.phoneNumber = "Phone number is required";
-    if (!formData.meanGrade) errs.meanGrade = "Mean grade is required";
-    if (!formData.biologyGrade) errs.biologyGrade = "Biology grade is required";
+    if (!fullName.trim()) errs.fullName = "Full name is required";
+    if (!indexNumber.trim()) errs.indexNumber = "Index number is required";
+    if (!phoneNumber.trim()) errs.phoneNumber = "Phone number is required";
+    if (!meanGrade) errs.meanGrade = "Mean grade is required";
+    if (!selectedCourse) errs.selectedCourse = "Please select a course";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   }
@@ -34,32 +41,41 @@ export function AdmissionForm() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
+    const course = eligibleCourses.find((c) => c.name === selectedCourse)!;
     const data: ApplicantData = {
-      fullName: formData.fullName.trim(),
-      indexNumber: formData.indexNumber.trim(),
-      phoneNumber: formData.phoneNumber.trim(),
-      meanGrade: formData.meanGrade as Grade,
-      biologyGrade: formData.biologyGrade as Grade,
+      fullName: fullName.trim(),
+      indexNumber: indexNumber.trim(),
+      phoneNumber: phoneNumber.trim(),
+      meanGrade: meanGrade as Grade,
     };
-    setResult(evaluateAdmission(data));
+    setResult(evaluateAdmission(data, course));
   }
 
   function handleDownload() {
     if (!result?.eligible) return;
     const data: ApplicantData = {
-      fullName: formData.fullName.trim(),
-      indexNumber: formData.indexNumber.trim(),
-      phoneNumber: formData.phoneNumber.trim(),
-      meanGrade: formData.meanGrade as Grade,
-      biologyGrade: formData.biologyGrade as Grade,
+      fullName: fullName.trim(),
+      indexNumber: indexNumber.trim(),
+      phoneNumber: phoneNumber.trim(),
+      meanGrade: meanGrade as Grade,
     };
     generateAdmissionLetter(data, result);
   }
 
   function handleReset() {
-    setFormData({ fullName: "", indexNumber: "", phoneNumber: "", meanGrade: "", biologyGrade: "" });
+    setFullName("");
+    setIndexNumber("");
+    setPhoneNumber("");
+    setMeanGrade("");
+    setSelectedCourse("");
     setResult(null);
     setErrors({});
+  }
+
+  function handleGradeChange(v: string) {
+    setMeanGrade(v as Grade);
+    setSelectedCourse("");
+    setResult(null);
   }
 
   return (
@@ -81,32 +97,31 @@ export function AdmissionForm() {
       </div>
 
       <div className="max-w-xl mx-auto space-y-6">
-        {/* Form Card */}
-        <Card className="border-border/60 shadow-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg text-foreground">Applicant Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Section 1: Applicant Details */}
+          <Card className="border-border/60 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg text-foreground">Applicant Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
                 <Input
                   id="fullName"
                   placeholder="e.g. John Kamau Mwangi"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData((p) => ({ ...p, fullName: e.target.value }))}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                 />
                 {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
               </div>
-
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="indexNumber">Index Number</Label>
                   <Input
                     id="indexNumber"
                     placeholder="e.g. 12345678/2024"
-                    value={formData.indexNumber}
-                    onChange={(e) => setFormData((p) => ({ ...p, indexNumber: e.target.value }))}
+                    value={indexNumber}
+                    onChange={(e) => setIndexNumber(e.target.value)}
                   />
                   {errors.indexNumber && <p className="text-sm text-destructive">{errors.indexNumber}</p>}
                 </div>
@@ -115,47 +130,81 @@ export function AdmissionForm() {
                   <Input
                     id="phoneNumber"
                     placeholder="e.g. 0712345678"
-                    value={formData.phoneNumber}
-                    onChange={(e) => setFormData((p) => ({ ...p, phoneNumber: e.target.value }))}
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
                   />
                   {errors.phoneNumber && <p className="text-sm text-destructive">{errors.phoneNumber}</p>}
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>KCSE Mean Grade</Label>
-                  <Select value={formData.meanGrade} onValueChange={(v) => setFormData((p) => ({ ...p, meanGrade: v as Grade }))}>
-                    <SelectTrigger><SelectValue placeholder="Select grade" /></SelectTrigger>
-                    <SelectContent>
-                      {grades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  {errors.meanGrade && <p className="text-sm text-destructive">{errors.meanGrade}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label>Biology Grade</Label>
-                  <Select value={formData.biologyGrade} onValueChange={(v) => setFormData((p) => ({ ...p, biologyGrade: v as Grade }))}>
-                    <SelectTrigger><SelectValue placeholder="Select grade" /></SelectTrigger>
-                    <SelectContent>
-                      {grades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  {errors.biologyGrade && <p className="text-sm text-destructive">{errors.biologyGrade}</p>}
-                </div>
+          {/* Section 2: KCSE Grade & Course Selection */}
+          <Card className="border-border/60 shadow-sm">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg text-foreground">KCSE Grade & Course Selection</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="space-y-2">
+                <Label>KCSE Mean Grade</Label>
+                <Select value={meanGrade} onValueChange={handleGradeChange}>
+                  <SelectTrigger><SelectValue placeholder="Select your mean grade" /></SelectTrigger>
+                  <SelectContent>
+                    {grades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {errors.meanGrade && <p className="text-sm text-destructive">{errors.meanGrade}</p>}
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <Button type="submit" className="flex-1">
-                  Check Eligibility
-                </Button>
-                <Button type="button" variant="outline" onClick={handleReset}>
-                  Reset
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+              {meanGrade && eligibleCourses.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground">
+                      Eligible for: <span className="text-primary font-semibold">{category} Courses</span>
+                    </span>
+                    <span className="text-xs text-muted-foreground">({eligibleCourses.length} courses available)</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Select Course</Label>
+                    <Select value={selectedCourse} onValueChange={(v) => { setSelectedCourse(v); setResult(null); }}>
+                      <SelectTrigger><SelectValue placeholder="Choose a course" /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(coursesByFaculty).map(([faculty, courses]) => (
+                          <div key={faculty}>
+                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{faculty}</div>
+                            {courses.map((c) => (
+                              <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
+                            ))}
+                          </div>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.selectedCourse && <p className="text-sm text-destructive">{errors.selectedCourse}</p>}
+                  </div>
+                </div>
+              )}
+
+              {meanGrade && eligibleCourses.length === 0 && (
+                <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4">
+                  <p className="text-sm text-destructive font-medium">
+                    Your KCSE mean grade ({meanGrade}) does not meet the minimum requirement (D) for admission.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Actions */}
+          <div className="flex gap-3">
+            <Button type="submit" className="flex-1" disabled={!meanGrade || eligibleCourses.length === 0}>
+              Check Eligibility
+            </Button>
+            <Button type="button" variant="outline" onClick={handleReset}>
+              Reset
+            </Button>
+          </div>
+        </form>
 
         {/* Result Card */}
         {result && (

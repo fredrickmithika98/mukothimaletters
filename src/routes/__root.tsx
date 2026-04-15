@@ -29,14 +29,13 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Admission Letter Generator | Kenya National Polytechnic" },
+      { name: "description", content: "Generate your official admission letter based on KCSE results. Check eligibility for Diploma and Certificate courses." },
+      { name: "author", content: "Kenya National Polytechnic" },
+      { property: "og:title", content: "Admission Letter Generator" },
+      { property: "og:description", content: "Check eligibility and generate admission letters based on KCSE grades." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {

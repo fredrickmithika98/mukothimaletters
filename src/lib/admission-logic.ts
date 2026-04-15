@@ -7,7 +7,12 @@ export interface ApplicantData {
   indexNumber: string;
   phoneNumber: string;
   meanGrade: Grade;
-  biologyGrade: Grade;
+}
+
+export interface CourseInfo {
+  name: string;
+  faculty: string;
+  category: "Diploma" | "Certificate";
 }
 
 export interface AdmissionResult {
@@ -26,62 +31,80 @@ function isGradeAtLeast(grade: Grade, minimum: Grade): boolean {
   return gradeIndex(grade) <= gradeIndex(minimum);
 }
 
-// Diploma courses (mean grade C- or C)
-const DIPLOMA_COURSES = [
-  { name: "Diploma in Animal Health", faculty: "Faculty of Agriculture & Veterinary Sciences", requiresBiology: "C" as Grade },
-  { name: "Diploma in Agricultural Engineering", faculty: "Faculty of Agriculture & Veterinary Sciences" },
-  { name: "Diploma in Business Management", faculty: "Faculty of Business & Economics" },
-  { name: "Diploma in Information Technology", faculty: "Faculty of Computing & IT" },
-  { name: "Diploma in Education", faculty: "Faculty of Education & Social Sciences" },
+const FACULTY_NAMES: Record<string, string> = {
+  FHSS: "Faculty of Humanities & Social Sciences",
+  FBUST: "Faculty of Business & Technology",
+  FPET: "Faculty of Pure & Engineering Technology",
+  FLIND: "Faculty of Liberal & Interdisciplinary Studies",
+};
+
+// Diploma courses (mean grade C or C-)
+const DIPLOMA_COURSES: CourseInfo[] = [
+  { name: "Diploma in Community Development", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
+  { name: "Diploma in Criminology & Security Studies", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
+  { name: "Diploma in Social Work", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
+  { name: "Diploma in Disaster Management", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
+  { name: "Diploma in Leadership & Public Administration", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
+  { name: "Diploma in Information Science", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
+  { name: "Diploma in Journalism & Mass Communication", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
+  { name: "Diploma in Counselling Psychology", faculty: FACULTY_NAMES.FBUST, category: "Diploma" },
+  { name: "Diploma in Business Management", faculty: FACULTY_NAMES.FBUST, category: "Diploma" },
+  { name: "Diploma in Sales and Marketing", faculty: FACULTY_NAMES.FBUST, category: "Diploma" },
+  { name: "Diploma in Procurement & Logistics Management", faculty: FACULTY_NAMES.FBUST, category: "Diploma" },
+  { name: "Diploma in Insurance and Risk Management", faculty: FACULTY_NAMES.FBUST, category: "Diploma" },
+  { name: "Diploma in Accounting", faculty: FACULTY_NAMES.FBUST, category: "Diploma" },
+  { name: "Diploma in Project Planning & Management", faculty: FACULTY_NAMES.FPET, category: "Diploma" },
+  { name: "Diploma in Computer Science", faculty: FACULTY_NAMES.FPET, category: "Diploma" },
+  { name: "Diploma in Information Technology", faculty: FACULTY_NAMES.FLIND, category: "Diploma" },
+  { name: "Diploma in Health Records & Information Management", faculty: FACULTY_NAMES.FLIND, category: "Diploma" },
+  { name: "Diploma in Dryland Agriculture", faculty: FACULTY_NAMES.FLIND, category: "Diploma" },
 ];
 
 // Certificate courses (mean grade D+ or D)
-const CERTIFICATE_COURSES = [
-  { name: "Certificate in Animal Health", faculty: "Faculty of Agriculture & Veterinary Sciences", requiresBiology: "C-" as Grade },
-  { name: "Certificate in Farm Management", faculty: "Faculty of Agriculture & Veterinary Sciences" },
-  { name: "Certificate in Business Studies", faculty: "Faculty of Business & Economics" },
-  { name: "Certificate in Computer Applications", faculty: "Faculty of Computing & IT" },
-  { name: "Certificate in Social Work", faculty: "Faculty of Education & Social Sciences" },
+const CERTIFICATE_COURSES: CourseInfo[] = [
+  { name: "Certificate in Community Development", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
+  { name: "Certificate in Criminology & Security Studies", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
+  { name: "Certificate in Social Work", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
+  { name: "Certificate in Disaster Management", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
+  { name: "Certificate in Leadership & Public Administration", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
+  { name: "Certificate in National Cohesion, Values and Governance", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
+  { name: "Certificate in Business Management", faculty: FACULTY_NAMES.FBUST, category: "Certificate" },
+  { name: "Certificate in Procurement & Logistics", faculty: FACULTY_NAMES.FBUST, category: "Certificate" },
+  { name: "Certificate in Insurance & Risk Management", faculty: FACULTY_NAMES.FBUST, category: "Certificate" },
+  { name: "Certificate in Accounting", faculty: FACULTY_NAMES.FBUST, category: "Certificate" },
+  { name: "Certificate in Project Planning & Management", faculty: FACULTY_NAMES.FPET, category: "Certificate" },
+  { name: "Certificate in Computer Science", faculty: FACULTY_NAMES.FPET, category: "Certificate" },
+  { name: "Certificate in Information Technology", faculty: FACULTY_NAMES.FLIND, category: "Certificate" },
 ];
 
-export function evaluateAdmission(data: ApplicantData): AdmissionResult {
-  const { meanGrade, biologyGrade } = data;
+export function getEligibleCourses(meanGrade: Grade): CourseInfo[] {
+  const isDiploma = isGradeAtLeast(meanGrade, "C-");
+  const isCertificate = !isDiploma && isGradeAtLeast(meanGrade, "D");
 
-  // Determine category
-  const isDiploma = isGradeAtLeast(meanGrade, "C-"); // C- or higher
-  const isCertificate = !isDiploma && isGradeAtLeast(meanGrade, "D"); // D+ or D
+  if (isDiploma) return DIPLOMA_COURSES;
+  if (isCertificate) return CERTIFICATE_COURSES;
+  return [];
+}
 
-  if (!isDiploma && !isCertificate) {
+export function evaluateAdmission(data: ApplicantData, selectedCourse: CourseInfo): AdmissionResult {
+  const courses = getEligibleCourses(data.meanGrade);
+  const found = courses.find((c) => c.name === selectedCourse.name);
+
+  if (!found) {
     return {
-      category: "Certificate",
-      courseName: "",
-      faculty: "",
+      category: selectedCourse.category,
+      courseName: selectedCourse.name,
+      faculty: selectedCourse.faculty,
       eligible: false,
-      reason: "KCSE mean grade is below the minimum requirement (D) for admission.",
+      reason: "You are not eligible for the selected course based on your KCSE mean grade.",
     };
   }
 
-  const category = isDiploma ? "Diploma" : "Certificate";
-  const courses = isDiploma ? DIPLOMA_COURSES : CERTIFICATE_COURSES;
-
-  // Try to find best course — prefer Animal Health if biology qualifies
-  for (const course of courses) {
-    if (course.requiresBiology) {
-      if (isGradeAtLeast(biologyGrade, course.requiresBiology)) {
-        return { category, courseName: course.name, faculty: course.faculty, eligible: true };
-      }
-      // Skip this course, biology not met
-      continue;
-    }
-    return { category, courseName: course.name, faculty: course.faculty, eligible: true };
-  }
-
   return {
-    category,
-    courseName: "",
-    faculty: "",
-    eligible: false,
-    reason: "No eligible courses found for the given grades.",
+    category: found.category,
+    courseName: found.name,
+    faculty: found.faculty,
+    eligible: true,
   };
 }
 

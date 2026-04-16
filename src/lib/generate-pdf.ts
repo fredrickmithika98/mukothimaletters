@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import type { ApplicantData, AdmissionResult } from "./admission-logic";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FeeRow {
   sn: string;
@@ -12,10 +13,23 @@ interface FeeRow {
   odelY2S2?: string;
 }
 
-function getDiplomaFees(): { rows: FeeRow[]; regularTotal: [string, string]; odelTotal: [string, string, string, string]; regularYear: string; odelTotals: [string, string] } {
+type Templates = Record<string, string>;
+
+async function fetchTemplates(): Promise<Templates> {
+  const { data } = await supabase.from("letter_templates").select("template_key, content");
+  const map: Templates = {};
+  if (data) data.forEach((t) => { map[t.template_key] = t.content; });
+  return map;
+}
+
+function t(templates: Templates, key: string, fallback: string): string {
+  return templates[key] ?? fallback;
+}
+
+function getDiplomaFees(tpl: Templates): { rows: FeeRow[]; regularTotal: [string, string]; odelTotal: [string, string, string, string]; regularYear: string; odelTotals: [string, string] } {
   return {
     rows: [
-      { sn: "1", item: "Tuition fee per year", regularY1S1: "35,000", regularY1S2: "35,000", odelY1S1: "26,000", odelY1S2: "26,000", odelY2S1: "26,000", odelY2S2: "26,000" },
+      { sn: "1", item: "Tuition fee per year", regularY1S1: t(tpl, "diploma_fee_regular_tuition_y1s1", "35,000"), regularY1S2: t(tpl, "diploma_fee_regular_tuition_y1s2", "35,000"), odelY1S1: t(tpl, "diploma_fee_odel_tuition_y1s1", "26,000"), odelY1S2: t(tpl, "diploma_fee_odel_tuition_y1s2", "26,000"), odelY2S1: t(tpl, "diploma_fee_odel_tuition_y2s1", "26,000"), odelY2S2: t(tpl, "diploma_fee_odel_tuition_y2s2", "26,000") },
       { sn: "2", item: "Registration fee per year", regularY1S1: "1,000", regularY1S2: "", odelY1S1: "1,000", odelY1S2: "", odelY2S1: "1,000", odelY2S2: "" },
       { sn: "3", item: "Library per year", regularY1S1: "2,000", regularY1S2: "", odelY1S1: "2,000", odelY1S2: "", odelY2S1: "2,000", odelY2S2: "" },
       { sn: "4", item: "Activity fee per year", regularY1S1: "1,000", regularY1S2: "", odelY1S1: "", odelY1S2: "", odelY2S1: "", odelY2S2: "" },
@@ -32,10 +46,10 @@ function getDiplomaFees(): { rows: FeeRow[]; regularTotal: [string, string]; ode
   };
 }
 
-function getCertificateFees(): { rows: FeeRow[]; regularTotal: [string, string]; odelTotal: [string, string]; regularYear: string; odelYear: string } {
+function getCertificateFees(tpl: Templates): { rows: FeeRow[]; regularTotal: [string, string]; odelTotal: [string, string]; regularYear: string; odelYear: string } {
   return {
     rows: [
-      { sn: "1", item: "Tuition fee per year", regularY1S1: "30,000", regularY1S2: "30,000", odelY1S1: "17,500", odelY1S2: "17,500" },
+      { sn: "1", item: "Tuition fee per year", regularY1S1: t(tpl, "cert_fee_regular_tuition_y1s1", "30,000"), regularY1S2: t(tpl, "cert_fee_regular_tuition_y1s2", "30,000"), odelY1S1: t(tpl, "cert_fee_odel_tuition_y1s1", "17,500"), odelY1S2: t(tpl, "cert_fee_odel_tuition_y1s2", "17,500") },
       { sn: "2", item: "Registration fee per year", regularY1S1: "1,000", regularY1S2: "", odelY1S1: "1,000", odelY1S2: "" },
       { sn: "3", item: "Library per year", regularY1S1: "2,000", regularY1S2: "", odelY1S1: "2,000", odelY1S2: "" },
       { sn: "4", item: "Examination fee per year", regularY1S1: "2,000", regularY1S2: "", odelY1S1: "3,000", odelY1S2: "" },
@@ -61,7 +75,12 @@ async function loadImageAsBase64(url: string): Promise<string> {
   });
 }
 
+function replaceVars(text: string, vars: Record<string, string>): string {
+  return text.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`);
+}
+
 export async function generateAdmissionLetter(applicant: ApplicantData, result: AdmissionResult): Promise<void> {
+  const tpl = await fetchTemplates();
   const doc = new jsPDF();
 
   // Load logo
@@ -79,17 +98,22 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
 
   const isDiploma = result.category === "Diploma";
   const semesters = isDiploma ? "four" : "TWO";
-  const admissionFee = isDiploma ? "2,000" : "1,000";
+  const admissionFee = t(tpl, isDiploma ? "diploma_admission_fee" : "certificate_admission_fee", isDiploma ? "2,000" : "1,000");
+
+  const vars: Record<string, string> = {
+    courseName: result.courseName,
+    faculty: result.faculty,
+    semesters,
+    admissionFee,
+  };
 
   // ===== HEADER WITH LOGO =====
   if (logoData) {
-    // Add full-width logo header image (spans the content area)
     const logoWidth = contentWidth;
-    const logoHeight = 22; // approximate aspect ratio
+    const logoHeight = 22;
     doc.addImage(logoData, "JPEG", margin, y - 5, logoWidth, logoHeight);
     y += logoHeight + 3;
   } else {
-    // Fallback text header if logo fails
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.setTextColor(0, 51, 102);
@@ -145,7 +169,7 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
   const titleW = doc.getTextWidth("PROVISIONAL LETTER OF OFFER");
   doc.line((pageWidth - titleW) / 2, y, (pageWidth + titleW) / 2, y);
 
-  // Name, Index, Phone, Course
+  // Name, Index, Phone
   y += 10;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
@@ -173,13 +197,13 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
   doc.setFontSize(9.5);
   doc.setTextColor(30, 30, 30);
 
-  const bodyText = `Following your completion of form four studies, we are pleased to inform you that you have been offered provisional admission to Tharaka University, Mukothima Center for a ${result.courseName} in the ${result.faculty}, for the 2026/2027 academic year.`;
+  const bodyText = replaceVars(t(tpl, "body_intro", `Following your completion of form four studies, we are pleased to inform you that you have been offered provisional admission to Tharaka University, Mukothima Center for a {{courseName}} in the {{faculty}}, for the 2026/2027 academic year.`), vars);
   const bodyLines = doc.splitTextToSize(bodyText, contentWidth);
   doc.text(bodyLines, margin, y);
   y += bodyLines.length * 4.5;
 
   y += 3;
-  const semText = `The program is designed to take ${semesters} semesters. All new students will be required to report to the University for registration and commencement of first semester studies on Tuesday 15/09/2026.`;
+  const semText = replaceVars(t(tpl, "semester_info", `The program is designed to take {{semesters}} semesters. All new students will be required to report to the University for registration and commencement of first semester studies on Tuesday 15/09/2026.`), vars);
   const semLines = doc.splitTextToSize(semText, contentWidth);
   doc.text(semLines, margin, y);
   y += semLines.length * 4.5;
@@ -188,34 +212,32 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
   y += 5;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
-  doc.text("Your registration as a student of Tharaka University shall be subject to the following conditions:", margin, y);
+  doc.text(t(tpl, "conditions_heading", "Your registration as a student of Tharaka University shall be subject to the following conditions:"), margin, y);
   y += 6;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
 
-  const cond1 = "1. Verification of your qualifications by the University. You must present the originals of: KCSE results slip or certificate, school leaving certificate, and national ID / Birth Certificate at your first registration.";
+  const cond1 = "1. " + t(tpl, "condition_1", "Verification of your qualifications by the University. You must present the originals of: KCSE results slip or certificate, school leaving certificate, and national ID / Birth Certificate at your first registration.");
   const c1Lines = doc.splitTextToSize(cond1, contentWidth - 5);
   doc.text(c1Lines, margin + 3, y);
   y += c1Lines.length * 4;
 
   y += 2;
-  const cond2 = "2. To accept, by signing a declaration form, to adhere to all University Rules and Regulations governing Students Conduct after reporting.";
+  const cond2 = "2. " + t(tpl, "condition_2", "To accept, by signing a declaration form, to adhere to all University Rules and Regulations governing Students Conduct after reporting.");
   const c2Lines = doc.splitTextToSize(cond2, contentWidth - 5);
   doc.text(c2Lines, margin + 3, y);
   y += c2Lines.length * 4;
 
   y += 2;
-  doc.text("3. Payment of all fees and charges as set out below:", margin + 3, y);
+  doc.text("3. " + t(tpl, "condition_3", "Payment of all fees and charges as set out below:"), margin + 3, y);
 
   // ===== FEE TABLE =====
   y += 7;
 
   if (isDiploma) {
-    const fees = getDiplomaFees();
-    // Diploma has 8 columns: S/N, Item, Reg Y1S1, Reg Y1S2, ODeL Y1S1, ODeL Y1S2, ODeL Y2S1, ODeL Y2S2
+    const fees = getDiplomaFees(tpl);
     const colWidths = [8, 52, 18, 18, 18, 18, 18, 18];
-    const tableWidth = colWidths.reduce((a, b) => a + b, 0);
     const startX = margin;
 
     const drawRow = (cells: string[], rowY: number, bold = false, fillColor?: [number, number, number]) => {
@@ -237,7 +259,6 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
       }
     };
 
-    // Header row 1
     drawRow(["S/N", "", "REGULAR OPTION", "", "ODeL PROGRAMME OPTION", "", "", ""], y, true, [0, 51, 102]);
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
@@ -247,25 +268,21 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
     doc.text("ODeL PROGRAMME OPTION", startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 36, y, { align: "center" });
 
     y += 5;
-    // Sub-header
     drawRow(["", "", "Y1S1", "Y1S2", "Y1S1", "Y1S2", "Y2S1", "Y2S2"], y, true, [220, 230, 242]);
 
-    // Data rows
     for (const row of fees.rows) {
       y += 5;
       drawRow([row.sn, row.item, row.regularY1S1, row.regularY1S2, row.odelY1S1 || "", row.odelY1S2 || "", row.odelY2S1 || "", row.odelY2S2 || ""], y);
     }
 
-    // Total
     y += 5;
     drawRow(["", "TOTAL", fees.regularTotal[0], fees.regularTotal[1], fees.odelTotal[0], fees.odelTotal[1], fees.odelTotal[2], fees.odelTotal[3]], y, true, [245, 245, 245]);
 
-    // Total per year
     y += 5;
     drawRow(["", "TOTAL PER YEAR", fees.regularYear, "", fees.odelTotals[0], "", fees.odelTotals[1], ""], y, true, [245, 245, 245]);
 
   } else {
-    const fees = getCertificateFees();
+    const fees = getCertificateFees(tpl);
     const colWidths = [8, 52, 22, 22, 22, 22];
     const startX = margin;
 
@@ -288,7 +305,6 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
       }
     };
 
-    // Header
     drawRow(["S/N", "", "REGULAR OPTION", "", "ODeL OPTION", ""], y, true, [0, 51, 102]);
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
@@ -320,7 +336,7 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
   doc.setFontSize(9.5);
   doc.setTextColor(30, 30, 30);
 
-  const feeNote = "Please note that the University fees and other charges are determined by the University Council. The Council may revise the fees structure at any time it deems necessary.";
+  const feeNote = t(tpl, "fee_note", "Please note that the University fees and other charges are determined by the University Council. The Council may revise the fees structure at any time it deems necessary.");
   const fnLines = doc.splitTextToSize(feeNote, contentWidth);
   doc.text(fnLines, margin, y);
   y += fnLines.length * 4.5 + 5;
@@ -328,7 +344,7 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
   // Payment instructions
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
-  const payText = `All students MUST pay the required ${admissionFee} non-refundable admission fees through Government E-CITIZEN platform:`;
+  const payText = replaceVars(t(tpl, "payment_instruction", `All students MUST pay the required {{admissionFee}} non-refundable admission fees through Government E-CITIZEN platform:`), vars);
   const payLines = doc.splitTextToSize(payText, contentWidth);
   doc.text(payLines, margin, y);
   y += payLines.length * 4.5 + 4;
@@ -343,11 +359,11 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   const mpesaLines = [
-    "Go to Lipa na M-Pesa",
-    "Pay Bill 222222",
-    "Account No. APPF-NAME",
-    "Amount…….",
-    "M-Pesa Pin",
+    t(tpl, "mpesa_line_1", "Go to Lipa na M-Pesa"),
+    t(tpl, "mpesa_line_2", "Pay Bill 222222"),
+    t(tpl, "mpesa_line_3", "Account No. APPF-NAME"),
+    t(tpl, "mpesa_line_4", "Amount……."),
+    t(tpl, "mpesa_line_5", "M-Pesa Pin"),
   ];
   for (const line of mpesaLines) {
     doc.text(line, margin + 10, y);
@@ -357,14 +373,15 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
   y += 8;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.text("After payment, print your M-Pesa SMS and attach it to your academic documents", margin, y);
-  y += 4.5;
-  doc.text("for admission number processing.", margin, y);
+  const afterPay = t(tpl, "after_payment", "After payment, print your M-Pesa SMS and attach it to your academic documents for admission number processing.");
+  const afterPayLines = doc.splitTextToSize(afterPay, contentWidth);
+  doc.text(afterPayLines, margin, y);
+  y += afterPayLines.length * 4.5;
 
-  y += 10;
+  y += 6;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
-  const arrangeText = "You will also be required to make your own arrangements during the year to meet catering, exercise books & stationery and accommodation expenses.";
+  const arrangeText = t(tpl, "arrangement_note", "You will also be required to make your own arrangements during the year to meet catering, exercise books & stationery and accommodation expenses.");
   const arrLines = doc.splitTextToSize(arrangeText, contentWidth);
   doc.text(arrLines, margin, y);
   y += arrLines.length * 4.5 + 5;
@@ -373,8 +390,8 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   const nbText = isDiploma
-    ? "NB/ You will be ELIGIBLE FOR GOVERNMENT HELB LOAN and credit transfer that may allow you to complete the degree course in three (3) years after graduating with a diploma."
-    : "NB/ You will be ELIGIBLE for Four/Six Semester Diploma after graduating with a Certificate.";
+    ? t(tpl, "nb_diploma", "NB/ You will be ELIGIBLE FOR GOVERNMENT HELB LOAN and credit transfer that may allow you to complete the degree course in three (3) years after graduating with a diploma.")
+    : t(tpl, "nb_certificate", "NB/ You will be ELIGIBLE for Four/Six Semester Diploma after graduating with a Certificate.");
   const nbLines = doc.splitTextToSize(nbText, contentWidth);
   doc.text(nbLines, margin, y);
   y += nbLines.length * 4.5 + 5;
@@ -382,13 +399,13 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
   // Contact
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9.5);
-  const contactText = "If you accept the offer under these conditions, contact Mobile No. 0720021155 - Dr. Faustine Muchui to formalize your admission.";
+  const contactText = t(tpl, "contact_info", "If you accept the offer under these conditions, contact Mobile No. 0720021155 - Dr. Faustine Muchui to formalize your admission.");
   const ctLines = doc.splitTextToSize(contactText, contentWidth);
   doc.text(ctLines, margin, y);
   y += ctLines.length * 4.5 + 5;
 
   // Closing
-  const closeText = "We look forward to you joining Tharaka University - Mukothima Centre and on behalf of the Vice Chancellor, I wish you success in your future studies at our institution.";
+  const closeText = t(tpl, "closing_text", "We look forward to you joining Tharaka University - Mukothima Centre and on behalf of the Vice Chancellor, I wish you success in your future studies at our institution.");
   const clLines = doc.splitTextToSize(closeText, contentWidth);
   doc.text(clLines, margin, y);
   y += clLines.length * 4.5 + 8;
@@ -399,13 +416,15 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
-  doc.text("Dr. Daniel Mwangi", margin, y);
+  doc.text(t(tpl, "signatory_name", "Dr. Daniel Mwangi"), margin, y);
   y += 5;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.text("Ag. Registrar (Academic Affairs)", margin, y);
+  doc.text(t(tpl, "signatory_title", "Ag. Registrar (Academic Affairs)"), margin, y);
 
   // Footer on both pages
+  const footerLine1 = t(tpl, "footer_line_1", "Education for Freedom / Elimu ni Uhuru");
+  const footerLine2 = t(tpl, "footer_line_2", "Tharaka University is ISO 9001:2015 Certified");
   for (let p = 1; p <= 2; p++) {
     doc.setPage(p);
     const footY = pageHeight - 12;
@@ -415,8 +434,8 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
     doc.setFontSize(7);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(100, 100, 100);
-    doc.text("Education for Freedom / Elimu ni Uhuru", pageWidth / 2, footY + 4, { align: "center" });
-    doc.text("Tharaka University is ISO 9001:2015 Certified", pageWidth / 2, footY + 8, { align: "center" });
+    doc.text(footerLine1, pageWidth / 2, footY + 4, { align: "center" });
+    doc.text(footerLine2, pageWidth / 2, footY + 8, { align: "center" });
   }
 
   doc.save(`Admission_Letter_${applicant.fullName.replace(/\s+/g, "_")}.pdf`);

@@ -80,6 +80,33 @@ export type Database = {
         }
         Relationships: []
       }
+      letter_templates: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          label: string
+          template_key: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          label: string
+          template_key: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          label?: string
+          template_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

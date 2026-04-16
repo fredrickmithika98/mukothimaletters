@@ -200,23 +200,13 @@ export async function generateAdmissionLetter(
   doc.text("3. Payment of all fees as shown below:", margin, y);
 
   /* ================= TABLE ================= */
-    /* ================= TABLE TITLE ================= */
   y += 8;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(0, 51, 102);
-  doc.text("FEE STRUCTURE", margin, y);
 
-  y += 5;
-  doc.setTextColor(0, 0, 0);
-
-  /* ================= CERTIFICATE TABLE ================= */
   if (!isDiploma) {
     const rows: FeeRow[] = [
-      { sn: "1", item: "Tuition fee per year", values: ["30,000", "30,000", "17,500", "17,500"] },
-      { sn: "2", item: "Registration fee", values: ["1,000", "", "1,000", ""] },
-      { sn: "3", item: "Library fee", values: ["2,000", "", "2,000", ""] },
-      { sn: "4", item: "Examination fee", values: ["2,000", "", "3,000", ""] },
+      { sn: "1", item: "Tuition fee", values: ["30,000", "30,000", "17,500", "17,500"] },
+      { sn: "2", item: "Registration", values: ["1,000", "", "1,000", ""] },
+      { sn: "3", item: "Library", values: ["2,000", "", "2,000", ""] },
     ];
 
     const headers = ["S/N", "ITEM", "REGULAR", "", "ODeL", ""];

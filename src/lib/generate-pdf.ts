@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import "jspdf-autotable"; // ✅ CORRECT WAY (no build error)
+
 import type { ApplicantData, AdmissionResult } from "./admission-logic";
 
 /* ================= MAIN FUNCTION ================= */
@@ -55,7 +56,8 @@ export async function generateAdmissionLetter(
   y += 10;
   doc.setFontSize(9.5);
 
-  const intro = `You have been offered admission to pursue ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year.`;
+  const intro = `Following your completion of form four studies, you have been offered admission to pursue ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year.`;
+
   doc.text(doc.splitTextToSize(intro, contentWidth), margin, y);
 
   y += 12;
@@ -72,7 +74,7 @@ export async function generateAdmissionLetter(
 
   /* ================= DIPLOMA TABLE ================= */
   if (isDiploma) {
-    autoTable(doc, {
+    (doc as any).autoTable({
       startY: y,
 
       head: [
@@ -89,7 +91,7 @@ export async function generateAdmissionLetter(
       ],
 
       body: [
-        ["1", "Tuition", "35,000", "35,000", "26,000", "26,000", "26,000", "26,000"],
+        ["1", "Tuition fee", "35,000", "35,000", "26,000", "26,000", "26,000", "26,000"],
         ["2", "Registration", "1,000", "", "1,000", "", "1,000", ""],
         ["3", "Library", "2,000", "", "2,000", "", "2,000", ""],
         ["4", "Examination", "3,000", "", "3,000", "", "3,000", ""],
@@ -116,25 +118,14 @@ export async function generateAdmissionLetter(
 
       footStyles: {
         fillColor: [240, 240, 240],
-        textColor: 0,
         fontStyle: "bold",
-      },
-
-      columnStyles: {
-        0: { halign: "center" },
-        2: { halign: "center" },
-        3: { halign: "center" },
-        4: { halign: "center" },
-        5: { halign: "center" },
-        6: { halign: "center" },
-        7: { halign: "center" },
       },
     });
   }
 
   /* ================= CERTIFICATE TABLE ================= */
   else {
-    autoTable(doc, {
+    (doc as any).autoTable({
       startY: y,
 
       head: [
@@ -142,7 +133,7 @@ export async function generateAdmissionLetter(
       ],
 
       body: [
-        ["1", "Tuition", "30,000", "30,000", "17,500", "17,500"],
+        ["1", "Tuition fee", "30,000", "30,000", "17,500", "17,500"],
         ["2", "Registration", "1,000", "", "1,000", ""],
         ["3", "Library", "2,000", "", "2,000", ""],
         ["4", "Examination", "2,000", "", "3,000", ""],

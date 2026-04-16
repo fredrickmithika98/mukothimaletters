@@ -5,20 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 interface FeeRow {
   sn: string;
   item: string;
-  regularY1S1: string;
-  regularY1S2: string;
-  odelY1S1?: string;
-  odelY1S2?: string;
-  odelY2S1?: string;
-  odelY2S2?: string;
+  values: string[];
 }
 
 type Templates = Record<string, string>;
 
+/* ================= FETCH TEMPLATE ================= */
 async function fetchTemplates(): Promise<Templates> {
   const { data } = await supabase.from("letter_templates").select("template_key, content");
   const map: Templates = {};
-  if (data) data.forEach((t) => { map[t.template_key] = t.content; });
+  if (data) data.forEach((t) => (map[t.template_key] = t.content));
   return map;
 }
 
@@ -26,417 +22,168 @@ function t(templates: Templates, key: string, fallback: string): string {
   return templates[key] ?? fallback;
 }
 
-function getDiplomaFees(tpl: Templates): { rows: FeeRow[]; regularTotal: [string, string]; odelTotal: [string, string, string, string]; regularYear: string; odelTotals: [string, string] } {
-  return {
-    rows: [
-      { sn: "1", item: "Tuition fee per year", regularY1S1: t(tpl, "diploma_fee_regular_tuition_y1s1", "35,000"), regularY1S2: t(tpl, "diploma_fee_regular_tuition_y1s2", "35,000"), odelY1S1: t(tpl, "diploma_fee_odel_tuition_y1s1", "26,000"), odelY1S2: t(tpl, "diploma_fee_odel_tuition_y1s2", "26,000"), odelY2S1: t(tpl, "diploma_fee_odel_tuition_y2s1", "26,000"), odelY2S2: t(tpl, "diploma_fee_odel_tuition_y2s2", "26,000") },
-      { sn: "2", item: "Registration fee per year", regularY1S1: "1,000", regularY1S2: "", odelY1S1: "1,000", odelY1S2: "", odelY2S1: "1,000", odelY2S2: "" },
-      { sn: "3", item: "Library per year", regularY1S1: "2,000", regularY1S2: "", odelY1S1: "2,000", odelY1S2: "", odelY2S1: "2,000", odelY2S2: "" },
-      { sn: "4", item: "Activity fee per year", regularY1S1: "1,000", regularY1S2: "", odelY1S1: "", odelY1S2: "", odelY2S1: "", odelY2S2: "" },
-      { sn: "5", item: "Examination fee per year", regularY1S1: "3,000", regularY1S2: "", odelY1S1: "3,000", odelY1S2: "", odelY2S1: "3,000", odelY2S2: "" },
-      { sn: "6", item: "Material development per year", regularY1S1: "3,000", regularY1S2: "", odelY1S1: "", odelY1S2: "", odelY2S1: "", odelY2S2: "" },
-      { sn: "7", item: "Students Union 1st year", regularY1S1: "1,000", regularY1S2: "", odelY1S1: "1,000", odelY1S2: "", odelY2S1: "", odelY2S2: "" },
-      { sn: "8", item: "Caution money once", regularY1S1: "2,000", regularY1S2: "", odelY1S1: "2,000", odelY1S2: "", odelY2S1: "", odelY2S2: "" },
-      { sn: "9", item: "Student ID once", regularY1S1: "500", regularY1S2: "", odelY1S1: "500", odelY1S2: "", odelY2S1: "", odelY2S2: "" },
-    ],
-    regularTotal: ["48,500", "35,000"],
-    odelTotal: ["35,500", "26,000", "32,000", "26,000"],
-    regularYear: "83,500",
-    odelTotals: ["61,000", "58,000"],
+/* ================= CLEAN TABLE DRAWER ================= */
+function drawTable(
+  doc: jsPDF,
+  startY: number,
+  headers: string[],
+  subHeaders: string[],
+  rows: FeeRow[],
+  totals: string[],
+  colWidths: number[],
+  margin: number
+) {
+  let y = startY;
+  const rowHeight = 7;
+  const startX = margin;
+
+  const drawRow = (
+    cells: string[],
+    yPos: number,
+    bold = false,
+    fillColor?: [number, number, number]
+  ) => {
+    let x = startX;
+
+    for (let i = 0; i < cells.length; i++) {
+      if (fillColor) {
+        doc.setFillColor(...fillColor);
+        doc.rect(x, yPos, colWidths[i], rowHeight, "F");
+      }
+
+      doc.setDrawColor(120);
+      doc.rect(x, yPos, colWidths[i], rowHeight);
+
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setFontSize(8);
+
+      const align = i >= 2 ? "center" : "left";
+      const textX = i >= 2 ? x + colWidths[i] / 2 : x + 2;
+
+      doc.text(cells[i] || "", textX, yPos + 4.5, {
+        align: align as any,
+        maxWidth: colWidths[i] - 4,
+      });
+
+      x += colWidths[i];
+    }
   };
+
+  // HEADER
+  drawRow(headers, y, true, [0, 51, 102]);
+  doc.setTextColor(255, 255, 255);
+
+  y += rowHeight;
+
+  // SUB HEADER
+  drawRow(subHeaders, y, true, [220, 230, 242]);
+  doc.setTextColor(0, 0, 0);
+
+  // DATA ROWS
+  for (const row of rows) {
+    y += rowHeight;
+    drawRow([row.sn, row.item, ...row.values], y);
+  }
+
+  // TOTAL
+  y += rowHeight;
+  drawRow(["", "TOTAL", ...totals.slice(0, headers.length - 2)], y, true, [240, 240, 240]);
+
+  return y + rowHeight;
 }
 
-function getCertificateFees(tpl: Templates): { rows: FeeRow[]; regularTotal: [string, string]; odelTotal: [string, string]; regularYear: string; odelYear: string } {
-  return {
-    rows: [
-      { sn: "1", item: "Tuition fee per year", regularY1S1: t(tpl, "cert_fee_regular_tuition_y1s1", "30,000"), regularY1S2: t(tpl, "cert_fee_regular_tuition_y1s2", "30,000"), odelY1S1: t(tpl, "cert_fee_odel_tuition_y1s1", "17,500"), odelY1S2: t(tpl, "cert_fee_odel_tuition_y1s2", "17,500") },
-      { sn: "2", item: "Registration fee per year", regularY1S1: "1,000", regularY1S2: "", odelY1S1: "1,000", odelY1S2: "" },
-      { sn: "3", item: "Library per year", regularY1S1: "2,000", regularY1S2: "", odelY1S1: "2,000", odelY1S2: "" },
-      { sn: "4", item: "Examination fee per year", regularY1S1: "2,000", regularY1S2: "", odelY1S1: "3,000", odelY1S2: "" },
-      { sn: "5", item: "Students Union 1st year", regularY1S1: "1,000", regularY1S2: "", odelY1S1: "1,000", odelY1S2: "" },
-      { sn: "6", item: "Caution money once", regularY1S1: "2,000", regularY1S2: "", odelY1S1: "2,000", odelY1S2: "" },
-      { sn: "7", item: "Student ID once", regularY1S1: "500", regularY1S2: "", odelY1S1: "500", odelY1S2: "" },
-    ],
-    regularTotal: ["38,500", "30,000"],
-    odelTotal: ["27,000", "17,500"],
-    regularYear: "68,500",
-    odelYear: "44,500",
-  };
-}
-
-async function loadImageAsBase64(url: string): Promise<string> {
-  const response = await fetch(url);
-  const blob = await response.blob();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
-
-function replaceVars(text: string, vars: Record<string, string>): string {
-  return text.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`);
-}
-
-export async function generateAdmissionLetter(applicant: ApplicantData, result: AdmissionResult): Promise<void> {
+/* ================= MAIN FUNCTION ================= */
+export async function generateAdmissionLetter(
+  applicant: ApplicantData,
+  result: AdmissionResult
+): Promise<void> {
   const tpl = await fetchTemplates();
   const doc = new jsPDF();
 
-  // Load logo
-  let logoData: string | null = null;
-  try {
-    logoData = await loadImageAsBase64("/images/tharaka-logo.jpg");
-  } catch {
-    // Logo failed to load, continue without it
-  }
   const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
-  const contentWidth = pageWidth - 2 * margin;
-  let y = 20;
+  const contentWidth = pageWidth - margin * 2;
+
+  let y = 25;
 
   const isDiploma = result.category === "Diploma";
-  const semesters = isDiploma ? "four" : "TWO";
-  const admissionFee = t(tpl, isDiploma ? "diploma_admission_fee" : "certificate_admission_fee", isDiploma ? "2,000" : "1,000");
 
-  const vars: Record<string, string> = {
-    courseName: result.courseName,
-    faculty: result.faculty,
-    semesters,
-    admissionFee,
-  };
-
-  // ===== HEADER WITH LOGO =====
-  if (logoData) {
-    const logoWidth = contentWidth;
-    const logoHeight = 18;
-    doc.addImage(logoData, "JPEG", margin, y - 4, logoWidth, logoHeight);
-    y += logoHeight + 2;
-  } else {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.setTextColor(0, 51, 102);
-    doc.text("THARAKA", pageWidth / 2 - 30, y);
-    doc.text("UNIVERSITY", pageWidth / 2 + 18, y);
-    y += 6;
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(80, 80, 80);
-    doc.text("P.O BOX 193-60215, MARIMANTI, KENYA", pageWidth / 2, y, { align: "center" });
-    y += 4;
-    doc.text("Website: https://tharaka.ac.ke  |  Email: info@tharaka.ac.ke", pageWidth / 2, y, { align: "center" });
-    y += 5;
-  }
-
-  // Divider
-  y += 5;
-  doc.setDrawColor(0, 51, 102);
-  doc.setLineWidth(0.8);
-  doc.line(margin, y, pageWidth - margin, y);
-
-  // Office line
-  y += 7;
+  /* ================= HEADER ================= */
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(0, 0, 0);
-  doc.text("OFFICE OF THE REGISTRAR", pageWidth / 2, y, { align: "center" });
-  y += 5;
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(9);
-  doc.text("(Academic Affairs)", pageWidth / 2, y, { align: "center" });
-
-  // Date
-  y += 10;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(50, 50, 50);
-  const now = new Date();
-  const day = now.getDate();
-  const suffix = day === 1 || day === 21 || day === 31 ? "st" : day === 2 || day === 22 ? "nd" : day === 3 || day === 23 ? "rd" : "th";
-  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  doc.text(`${day}${suffix} ${months[now.getMonth()]} ${now.getFullYear()}`, margin, y);
-
-  // Title
-  y += 10;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.setTextColor(0, 51, 102);
-  doc.text("PROVISIONAL LETTER OF OFFER", pageWidth / 2, y, { align: "center" });
-  y += 2;
-  doc.setDrawColor(0, 51, 102);
-  doc.setLineWidth(0.5);
-  const titleW = doc.getTextWidth("PROVISIONAL LETTER OF OFFER");
-  doc.line((pageWidth - titleW) / 2, y, (pageWidth + titleW) / 2, y);
-
-  // Name, Index, Phone
-  y += 10;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(0, 0, 0);
-
-  doc.setFont("helvetica", "bold");
-  doc.text("Name:", margin, y);
-  doc.setFont("helvetica", "normal");
-  doc.text(applicant.fullName, margin + 25, y);
+  doc.setFontSize(16);
+  doc.text("THARAKA UNIVERSITY", pageWidth / 2, y, { align: "center" });
 
   y += 6;
-  doc.setFont("helvetica", "bold");
-  doc.text("Index No:", margin, y);
-  doc.setFont("helvetica", "normal");
-  doc.text(applicant.indexNumber, margin + 25, y);
+  doc.setFontSize(10);
+  doc.text("OFFICE OF THE REGISTRAR (Academic Affairs)", pageWidth / 2, y, {
+    align: "center",
+  });
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Phone:", pageWidth / 2, y);
-  doc.setFont("helvetica", "normal");
-  doc.text(applicant.phoneNumber, pageWidth / 2 + 22, y);
-
-  // Body paragraph
   y += 10;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  doc.setTextColor(30, 30, 30);
+  doc.setFontSize(11);
+  doc.text("PROVISIONAL LETTER OF OFFER", pageWidth / 2, y, {
+    align: "center",
+  });
 
-  const bodyText = replaceVars(t(tpl, "body_intro", `Following your completion of form four studies, we are pleased to inform you that you have been offered provisional admission to Tharaka University, Mukothima Center for a {{courseName}} in the {{faculty}}, for the 2026/2027 academic year.`), vars);
-  const bodyLines = doc.splitTextToSize(bodyText, contentWidth);
-  doc.text(bodyLines, margin, y);
-  y += bodyLines.length * 4.5;
+  y += 10;
 
-  y += 3;
-  const semText = replaceVars(t(tpl, "semester_info", `The program is designed to take {{semesters}} semesters. All new students will be required to report to the University for registration and commencement of first semester studies on Tuesday 15/09/2026.`), vars);
-  const semLines = doc.splitTextToSize(semText, contentWidth);
-  doc.text(semLines, margin, y);
-  y += semLines.length * 4.5;
-
-  // Conditions
-  y += 5;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.text(t(tpl, "conditions_heading", "Your registration as a student of Tharaka University shall be subject to the following conditions:"), margin, y);
+  /* ================= APPLICANT INFO ================= */
+  doc.setFontSize(10);
+  doc.text(`Name: ${applicant.fullName}`, margin, y);
   y += 6;
+  doc.text(`Index No: ${applicant.indexNumber}`, margin, y);
+  y += 6;
+  doc.text(`Phone: ${applicant.phoneNumber}`, margin, y);
 
-  doc.setFont("helvetica", "normal");
+  /* ================= BODY ================= */
+  y += 10;
+
   doc.setFontSize(9);
+  const body = `You have been offered admission to pursue ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year.`;
+  const lines = doc.splitTextToSize(body, contentWidth);
+  doc.text(lines, margin, y);
 
-  const cond1 = "1. " + t(tpl, "condition_1", "Verification of your qualifications by the University. You must present the originals of: KCSE results slip or certificate, school leaving certificate, and national ID / Birth Certificate at your first registration.");
-  const c1Lines = doc.splitTextToSize(cond1, contentWidth - 5);
-  doc.text(c1Lines, margin + 3, y);
-  y += c1Lines.length * 4;
+  y += lines.length * 5 + 5;
 
-  y += 2;
-  const cond2 = "2. " + t(tpl, "condition_2", "To accept, by signing a declaration form, to adhere to all University Rules and Regulations governing Students Conduct after reporting.");
-  const c2Lines = doc.splitTextToSize(cond2, contentWidth - 5);
-  doc.text(c2Lines, margin + 3, y);
-  y += c2Lines.length * 4;
+  doc.text("3. Payment of fees as shown below:", margin, y);
 
-  y += 2;
-  doc.text("3. " + t(tpl, "condition_3", "Payment of all fees and charges as set out below:"), margin + 3, y);
-
-  // ===== FEE TABLE =====
-  y += 7;
-
-  if (isDiploma) {
-    const fees = getDiplomaFees(tpl);
-    const colWidths = [8, 52, 18, 18, 18, 18, 18, 18];
-    const startX = margin;
-
-    const drawRow = (cells: string[], rowY: number, bold = false, fillColor?: [number, number, number]) => {
-      let x = startX;
-      for (let i = 0; i < cells.length; i++) {
-        if (fillColor) {
-          doc.setFillColor(...fillColor);
-          doc.rect(x, rowY - 3.5, colWidths[i], 5, "F");
-        }
-        doc.setDrawColor(150, 150, 150);
-        doc.setLineWidth(0.2);
-        doc.rect(x, rowY - 3.5, colWidths[i], 5);
-        doc.setFont("helvetica", bold ? "bold" : "normal");
-        doc.setFontSize(7);
-        doc.setTextColor(0, 0, 0);
-        const align = i >= 2 ? "center" : "left";
-        const tx = align === "center" ? x + colWidths[i] / 2 : x + 1;
-        doc.text(cells[i], tx, rowY, { align: align === "center" ? "center" : "left" });
-      }
-    };
-
-    drawRow(["S/N", "", "REGULAR OPTION", "", "ODeL PROGRAMME OPTION", "", "", ""], y, true, [0, 51, 102]);
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
-    doc.text("S/N", startX + 1, y);
-    doc.text("REGULAR OPTION", startX + colWidths[0] + colWidths[1] + 18, y, { align: "center" });
-    doc.text("ODeL PROGRAMME OPTION", startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 36, y, { align: "center" });
-
-    y += 5;
-    drawRow(["", "", "Y1S1", "Y1S2", "Y1S1", "Y1S2", "Y2S1", "Y2S2"], y, true, [220, 230, 242]);
-
-    for (const row of fees.rows) {
-      y += 5;
-      drawRow([row.sn, row.item, row.regularY1S1, row.regularY1S2, row.odelY1S1 || "", row.odelY1S2 || "", row.odelY2S1 || "", row.odelY2S2 || ""], y);
-    }
-
-    y += 5;
-    drawRow(["", "TOTAL", fees.regularTotal[0], fees.regularTotal[1], fees.odelTotal[0], fees.odelTotal[1], fees.odelTotal[2], fees.odelTotal[3]], y, true, [245, 245, 245]);
-
-    y += 5;
-    drawRow(["", "TOTAL PER YEAR", fees.regularYear, "", fees.odelTotals[0], "", fees.odelTotals[1], ""], y, true, [245, 245, 245]);
-
-  } else {
-    const fees = getCertificateFees(tpl);
-    const colWidths = [8, 52, 22, 22, 22, 22];
-    const startX = margin;
-
-    const drawRow = (cells: string[], rowY: number, bold = false, fillColor?: [number, number, number]) => {
-      let x = startX;
-      for (let i = 0; i < cells.length; i++) {
-        if (fillColor) {
-          doc.setFillColor(...fillColor);
-          doc.rect(x, rowY - 3.5, colWidths[i], 5, "F");
-        }
-        doc.setDrawColor(150, 150, 150);
-        doc.setLineWidth(0.2);
-        doc.rect(x, rowY - 3.5, colWidths[i], 5);
-        doc.setFont("helvetica", bold ? "bold" : "normal");
-        doc.setFontSize(7.5);
-        doc.setTextColor(0, 0, 0);
-        const align = i >= 2 ? "center" : "left";
-        const tx = align === "center" ? x + colWidths[i] / 2 : x + 1;
-        doc.text(cells[i], tx, rowY, { align: align === "center" ? "center" : "left" });
-      }
-    };
-
-    drawRow(["S/N", "", "REGULAR OPTION", "", "ODeL OPTION", ""], y, true, [0, 51, 102]);
-    doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
-    doc.text("S/N", startX + 1, y);
-    doc.text("REGULAR OPTION", startX + colWidths[0] + colWidths[1] + 22, y, { align: "center" });
-    doc.text("ODeL OPTION", startX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 22, y, { align: "center" });
-
-    y += 5;
-    drawRow(["", "", "Y1S1", "Y1S2", "Y1S1", "Y1S2"], y, true, [220, 230, 242]);
-
-    for (const row of fees.rows) {
-      y += 5;
-      drawRow([row.sn, row.item, row.regularY1S1, row.regularY1S2, row.odelY1S1 || "", row.odelY1S2 || ""], y);
-    }
-
-    y += 5;
-    drawRow(["", "TOTAL", fees.regularTotal[0], fees.regularTotal[1], fees.odelTotal[0], fees.odelTotal[1]], y, true, [245, 245, 245]);
-
-    y += 5;
-    drawRow(["", "TOTAL PER YEAR", fees.regularYear, "", fees.odelYear, ""], y, true, [245, 245, 245]);
-  }
-
-  // ===== PAGE 2 =====
-  doc.addPage();
-  y = 25;
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  doc.setTextColor(30, 30, 30);
-
-  const feeNote = t(tpl, "fee_note", "Please note that the University fees and other charges are determined by the University Council. The Council may revise the fees structure at any time it deems necessary.");
-  const fnLines = doc.splitTextToSize(feeNote, contentWidth);
-  doc.text(fnLines, margin, y);
-  y += fnLines.length * 4.5 + 5;
-
-  // Payment instructions
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  const payText = replaceVars(t(tpl, "payment_instruction", `All students MUST pay the required {{admissionFee}} non-refundable admission fees through Government E-CITIZEN platform:`), vars);
-  const payLines = doc.splitTextToSize(payText, contentWidth);
-  doc.text(payLines, margin, y);
-  y += payLines.length * 4.5 + 4;
-
-  // M-Pesa box
-  doc.setFillColor(245, 248, 252);
-  doc.setDrawColor(0, 51, 102);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(margin, y - 3, contentWidth, 32, 2, 2, "FD");
-
-  y += 3;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  const mpesaLines = [
-    t(tpl, "mpesa_line_1", "Go to Lipa na M-Pesa"),
-    t(tpl, "mpesa_line_2", "Pay Bill 222222"),
-    t(tpl, "mpesa_line_3", "Account No. APPF-NAME"),
-    t(tpl, "mpesa_line_4", "Amount……."),
-    t(tpl, "mpesa_line_5", "M-Pesa Pin"),
-  ];
-  for (const line of mpesaLines) {
-    doc.text(line, margin + 10, y);
-    y += 5;
-  }
-
+  /* ================= TABLE TITLE ================= */
   y += 8;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  const afterPay = t(tpl, "after_payment", "After payment, print your M-Pesa SMS and attach it to your academic documents for admission number processing.");
-  const afterPayLines = doc.splitTextToSize(afterPay, contentWidth);
-  doc.text(afterPayLines, margin, y);
-  y += afterPayLines.length * 4.5;
-
-  y += 6;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  const arrangeText = t(tpl, "arrangement_note", "You will also be required to make your own arrangements during the year to meet catering, exercise books & stationery and accommodation expenses.");
-  const arrLines = doc.splitTextToSize(arrangeText, contentWidth);
-  doc.text(arrLines, margin, y);
-  y += arrLines.length * 4.5 + 5;
-
-  // NB note
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  const nbText = isDiploma
-    ? t(tpl, "nb_diploma", "NB/ You will be ELIGIBLE FOR GOVERNMENT HELB LOAN and credit transfer that may allow you to complete the degree course in three (3) years after graduating with a diploma.")
-    : t(tpl, "nb_certificate", "NB/ You will be ELIGIBLE for Four/Six Semester Diploma after graduating with a Certificate.");
-  const nbLines = doc.splitTextToSize(nbText, contentWidth);
-  doc.text(nbLines, margin, y);
-  y += nbLines.length * 4.5 + 5;
-
-  // Contact
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  const contactText = t(tpl, "contact_info", "If you accept the offer under these conditions, contact Mobile No. 0720021155 - Dr. Faustine Muchui to formalize your admission.");
-  const ctLines = doc.splitTextToSize(contactText, contentWidth);
-  doc.text(ctLines, margin, y);
-  y += ctLines.length * 4.5 + 5;
-
-  // Closing
-  const closeText = t(tpl, "closing_text", "We look forward to you joining Tharaka University - Mukothima Centre and on behalf of the Vice Chancellor, I wish you success in your future studies at our institution.");
-  const clLines = doc.splitTextToSize(closeText, contentWidth);
-  doc.text(clLines, margin, y);
-  y += clLines.length * 4.5 + 8;
-
-  doc.text("Yours Faithfully,", margin, y);
-
-  y += 18;
-  doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.setTextColor(0, 0, 0);
-  doc.text(t(tpl, "signatory_name", "Dr. Daniel Mwangi"), margin, y);
-  y += 5;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  doc.text(t(tpl, "signatory_title", "Ag. Registrar (Academic Affairs)"), margin, y);
+  doc.setTextColor(0, 51, 102);
+  doc.text("FEE STRUCTURE", margin, y);
 
-  // Footer on both pages
-  const footerLine1 = t(tpl, "footer_line_1", "Education for Freedom / Elimu ni Uhuru");
-  const footerLine2 = t(tpl, "footer_line_2", "Tharaka University is ISO 9001:2015 Certified");
-  for (let p = 1; p <= 2; p++) {
-    doc.setPage(p);
-    const footY = pageHeight - 12;
-    doc.setDrawColor(0, 51, 102);
-    doc.setLineWidth(0.4);
-    doc.line(margin, footY, pageWidth - margin, footY);
-    doc.setFontSize(7);
-    doc.setFont("helvetica", "italic");
-    doc.setTextColor(100, 100, 100);
-    doc.text(footerLine1, pageWidth / 2, footY + 4, { align: "center" });
-    doc.text(footerLine2, pageWidth / 2, footY + 8, { align: "center" });
+  y += 5;
+  doc.setTextColor(0, 0, 0);
+
+  /* ================= CERTIFICATE TABLE ================= */
+  if (!isDiploma) {
+    const rows: FeeRow[] = [
+      { sn: "1", item: "Tuition fee per year", values: ["30,000", "30,000", "17,500", "17,500"] },
+      { sn: "2", item: "Registration fee", values: ["1,000", "", "1,000", ""] },
+      { sn: "3", item: "Library fee", values: ["2,000", "", "2,000", ""] },
+      { sn: "4", item: "Examination fee", values: ["2,000", "", "3,000", ""] },
+    ];
+
+    const headers = ["S/N", "ITEM", "REGULAR", "", "ODeL", ""];
+    const subHeaders = ["", "", "Y1S1", "Y1S2", "Y1S1", "Y1S2"];
+    const totals = ["38,500", "30,000", "27,000", "17,500"];
+    const colWidths = [10, 70, 25, 25, 25, 25];
+
+    y = drawTable(doc, y, headers, subHeaders, rows, totals, colWidths, margin);
   }
 
-  doc.save(`Admission_Letter_${applicant.fullName.replace(/\s+/g, "_")}.pdf`);
+  /* ================= FOOTER ================= */
+  y += 15;
+
+  doc.text("Yours Faithfully,", margin, y);
+  y += 15;
+
+  doc.setFont("helvetica", "bold");
+  doc.text("Dr. Daniel Mwangi", margin, y);
+  y += 5;
+  doc.text("Ag. Registrar (Academic Affairs)", margin, y);
+
+  doc.save(`Admission_Letter_${applicant.fullName}.pdf`);
 }

@@ -1,19 +1,12 @@
 import jsPDF from "jspdf";
-
-/* ================= LOAD IMAGE ================= */
-async function loadImage(url: string): Promise<string> {
-  const res = await fetch(url);
-  const blob = await res.blob();
-
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.readAsDataURL(blob);
-  });
-}
+import autoTable from "jspdf-autotable";
+import type { ApplicantData, AdmissionResult } from "./admission-logic";
 
 /* ================= MAIN FUNCTION ================= */
-export async function generateAdmissionLetter(applicant, result) {
+export async function generateAdmissionLetter(
+  applicant: ApplicantData,
+  result: AdmissionResult
+): Promise<void> {
   const doc = new jsPDF();
 
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -21,71 +14,35 @@ export async function generateAdmissionLetter(applicant, result) {
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
 
-  let y = 20;
+  let y = 25;
 
-  /* ================= LOAD LOGO + SIGNATURE ================= */
-  let logo = "";
-  let signature = "";
-
-  try {
-    logo = await loadImage("/images/tharaka-logo.jpg");
-    signature = await loadImage("/images/signature.png"); // upload your signature here
-  } catch {}
+  const isDiploma = result.category === "Diploma";
 
   /* ================= HEADER ================= */
-  if (logo) {
-    doc.addImage(logo, "JPEG", pageWidth / 2 - 25, y, 50, 20);
-    y += 22;
-  }
-
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("THARAKA UNIVERSITY", pageWidth / 2, y, { align: "center" });
-
-  y += 5;
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.text("P.O BOX 193-60215, MARIMANTI, KENYA", pageWidth / 2, y, { align: "center" });
-
-  y += 4;
-  doc.text("Email: info@tharaka.ac.ke | Website: www.tharaka.ac.ke", pageWidth / 2, y, { align: "center" });
-
-  /* ===== LINE ===== */
-  y += 6;
-  doc.setDrawColor(0, 51, 102);
-  doc.setLineWidth(0.8);
-  doc.line(margin, y, pageWidth - margin, y);
-
-  /* ================= OFFICE ================= */
-  y += 7;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(12);
   doc.text("OFFICE OF THE REGISTRAR", pageWidth / 2, y, { align: "center" });
 
   y += 5;
   doc.setFont("helvetica", "italic");
   doc.text("(Academic Affairs)", pageWidth / 2, y, { align: "center" });
 
-  /* ================= DATE ================= */
   y += 10;
-  const today = new Date().toDateString();
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.text(today, margin, y);
+  const dateStr = new Date().toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  doc.text(dateStr, pageWidth - margin, y, { align: "right" });
 
-  /* ================= TITLE ================= */
   y += 10;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(12);
-  doc.setTextColor(0, 51, 102);
   doc.text("PROVISIONAL LETTER OF OFFER", pageWidth / 2, y, { align: "center" });
 
-  y += 2;
-  doc.line(pageWidth / 2 - 40, y, pageWidth / 2 + 40, y);
+  y += 12;
 
-  /* ================= STUDENT DETAILS ================= */
-  y += 10;
-  doc.setTextColor(0, 0, 0);
+  /* ================= APPLICANT ================= */
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
 
   doc.text(`Name: ${applicant.fullName}`, margin, y);
@@ -96,81 +53,128 @@ export async function generateAdmissionLetter(applicant, result) {
 
   /* ================= BODY ================= */
   y += 10;
-
   doc.setFontSize(9.5);
-  const body1 = `Following your completion of Form Four studies, we are pleased to inform you that you have been offered provisional admission to Tharaka University to pursue ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year.`;
 
-  doc.text(doc.splitTextToSize(body1, contentWidth), margin, y);
+  const intro = `You have been offered admission to pursue ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year.`;
+  doc.text(doc.splitTextToSize(intro, contentWidth), margin, y);
+
   y += 12;
+  doc.text("3. Payment of all fees as shown below:", margin, y);
 
-  const body2 = `The programme will take ${result.category === "Diploma" ? "four" : "two"} semesters. You are required to report on 15th September 2026 for registration.`;
-
-  doc.text(doc.splitTextToSize(body2, contentWidth), margin, y);
-  y += 12;
-
-  /* ================= CONDITIONS ================= */
+  /* ================= TABLE TITLE ================= */
+  y += 8;
   doc.setFont("helvetica", "bold");
-  doc.text("Admission Conditions:", margin, y);
-  y += 6;
-
-  doc.setFont("helvetica", "normal");
-
-  const conditions = [
-    "1. Present original KCSE certificate, leaving certificate, and ID.",
-    "2. Sign student declaration form.",
-    "3. Pay all required fees as outlined below.",
-  ];
-
-  conditions.forEach((c) => {
-    doc.text(doc.splitTextToSize(c, contentWidth), margin, y);
-    y += 6;
-  });
-
-  /* ================= SIMPLE TABLE ================= */
-  y += 5;
-
-  doc.setFont("helvetica", "bold");
+  doc.setTextColor(0, 51, 102);
   doc.text("FEE STRUCTURE", margin, y);
+  doc.setTextColor(0, 0, 0);
 
-  y += 6;
+  y += 4;
 
-  doc.setFont("helvetica", "normal");
+  /* ================= DIPLOMA TABLE ================= */
+  if (isDiploma) {
+    autoTable(doc, {
+      startY: y,
 
-  const fees = [
-    ["Item", "Amount"],
-    ["Tuition", "30,000"],
-    ["Registration", "1,000"],
-    ["Library", "2,000"],
-    ["Total", "38,500"],
-  ];
+      head: [
+        [
+          "S/N",
+          "ITEM",
+          "REGULAR Y1S1",
+          "REGULAR Y1S2",
+          "ODeL Y1S1",
+          "ODeL Y1S2",
+          "ODeL Y2S1",
+          "ODeL Y2S2",
+        ],
+      ],
 
-  fees.forEach((row) => {
-    doc.text(row[0], margin, y);
-    doc.text(row[1], pageWidth - margin - 30, y);
-    y += 6;
-  });
+      body: [
+        ["1", "Tuition", "35,000", "35,000", "26,000", "26,000", "26,000", "26,000"],
+        ["2", "Registration", "1,000", "", "1,000", "", "1,000", ""],
+        ["3", "Library", "2,000", "", "2,000", "", "2,000", ""],
+        ["4", "Examination", "3,000", "", "3,000", "", "3,000", ""],
+        ["5", "Student Union", "1,000", "", "1,000", "", "", ""],
+        ["6", "Caution", "2,000", "", "2,000", "", "", ""],
+        ["7", "Student ID", "500", "", "500", "", "", ""],
+      ],
+
+      foot: [
+        ["", "TOTAL", "48,500", "35,000", "35,500", "26,000", "32,000", "26,000"],
+        ["", "TOTAL PER YEAR", "83,500", "", "61,000", "", "58,000", ""],
+      ],
+
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+      },
+
+      headStyles: {
+        fillColor: [0, 51, 102],
+        textColor: 255,
+        halign: "center",
+      },
+
+      footStyles: {
+        fillColor: [240, 240, 240],
+        textColor: 0,
+        fontStyle: "bold",
+      },
+
+      columnStyles: {
+        0: { halign: "center" },
+        2: { halign: "center" },
+        3: { halign: "center" },
+        4: { halign: "center" },
+        5: { halign: "center" },
+        6: { halign: "center" },
+        7: { halign: "center" },
+      },
+    });
+  }
+
+  /* ================= CERTIFICATE TABLE ================= */
+  else {
+    autoTable(doc, {
+      startY: y,
+
+      head: [
+        ["S/N", "ITEM", "REGULAR Y1S1", "REGULAR Y1S2", "ODeL Y1S1", "ODeL Y1S2"],
+      ],
+
+      body: [
+        ["1", "Tuition", "30,000", "30,000", "17,500", "17,500"],
+        ["2", "Registration", "1,000", "", "1,000", ""],
+        ["3", "Library", "2,000", "", "2,000", ""],
+        ["4", "Examination", "2,000", "", "3,000", ""],
+      ],
+
+      foot: [["", "TOTAL", "38,500", "30,000", "27,000", "17,500"]],
+
+      styles: {
+        fontSize: 8,
+      },
+
+      headStyles: {
+        fillColor: [0, 51, 102],
+        textColor: 255,
+      },
+
+      footStyles: {
+        fillColor: [240, 240, 240],
+        fontStyle: "bold",
+      },
+    });
+  }
 
   /* ================= PAGE 2 ================= */
   doc.addPage();
   y = 25;
 
-  doc.setFontSize(9.5);
-
-  doc.text(
-    doc.splitTextToSize(
-      "University fees may change as determined by the University Council.",
-      contentWidth
-    ),
-    margin,
-    y
-  );
+  doc.setFontSize(10);
+  doc.text("PAYMENT INSTRUCTIONS", margin, y);
 
   y += 10;
-
-  doc.setFont("helvetica", "bold");
-  doc.text("PAYMENT PROCEDURE (M-PESA)", margin, y);
-
-  y += 6;
+  doc.setFontSize(9);
 
   const mpesa = [
     "Go to Lipa na M-Pesa",
@@ -180,33 +184,16 @@ export async function generateAdmissionLetter(applicant, result) {
     "Enter PIN",
   ];
 
-  doc.setFont("helvetica", "normal");
-  mpesa.forEach((m) => {
-    doc.text(m, margin + 5, y);
+  mpesa.forEach((line) => {
+    doc.text(line, margin, y);
     y += 6;
   });
 
-  y += 10;
-
-  doc.text(
-    "Attach payment SMS to your documents for processing.",
-    margin,
-    y
-  );
-
-  y += 15;
-
+  /* ================= SIGNATURE ================= */
+  y += 20;
   doc.text("Yours Faithfully,", margin, y);
 
-  /* ================= SIGNATURE ================= */
   y += 15;
-
-  if (signature) {
-    doc.addImage(signature, "PNG", margin, y - 10, 40, 15);
-  }
-
-  y += 10;
-
   doc.setFont("helvetica", "bold");
   doc.text("Dr. Daniel Mwangi", margin, y);
 
@@ -214,29 +201,23 @@ export async function generateAdmissionLetter(applicant, result) {
   doc.text("Ag. Registrar (Academic Affairs)", margin, y);
 
   /* ================= FOOTER ================= */
-  const addFooter = () => {
-    const fy = pageHeight - 15;
+  for (let p = 1; p <= doc.getNumberOfPages(); p++) {
+    doc.setPage(p);
 
-    doc.setDrawColor(0, 51, 102);
-    doc.line(margin, fy, pageWidth - margin, fy);
+    const footY = pageHeight - 12;
 
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "italic");
-    doc.text("Education for Freedom / Elimu ni Uhuru", pageWidth / 2, fy + 5, {
+    doc.setFontSize(7);
+    doc.text("Education for Freedom / Elimu ni Uhuru", pageWidth / 2, footY, {
       align: "center",
     });
 
-    doc.text("ISO 9001:2015 Certified Institution", pageWidth / 2, fy + 9, {
-      align: "center",
-    });
-  };
+    doc.text(
+      "Tharaka University is ISO 9001:2015 Certified",
+      pageWidth / 2,
+      footY + 4,
+      { align: "center" }
+    );
+  }
 
-  doc.setPage(1);
-  addFooter();
-
-  doc.setPage(2);
-  addFooter();
-
-  /* ================= SAVE ================= */
-  doc.save(`Admission_${applicant.fullName}.pdf`);
+  doc.save(`Admission_Letter_${applicant.fullName}.pdf`);
 }

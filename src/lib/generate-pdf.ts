@@ -139,7 +139,12 @@ export async function generateAdmissionLetter(
   y += 10;
 
   doc.setFontSize(9);
-  const body = `You have been offered admission to pursue ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year.`;
+  const body = `Following your completion of form four studies, we are pleased to inform you that you have been offered provisional admission to Tharaka University, Mukothima Center for a  ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year The program is designed to take four semesters. All new students will be required to report to the University for registration and commencement of first semester studies of 2026/2027 academic year on Tuesday 15/09/2026.
+
+Your registration as a student of Tharaka University shall be subject to the following conditions:
+1.  Verification of your qualifications by the University. You must, therefore, present the originals of the following documents: KCSE/KCE/KACE results slip or certificate, school leaving certificate, diploma transcripts and certificates, and the national ID / Birth Certificate at your first registration
+2.  To accept, by signing a declaration form, to adhere to all University Rules and Regulations governing Students Conduct after reporting.
+.`;
   const lines = doc.splitTextToSize(body, contentWidth);
   doc.text(lines, margin, y);
 

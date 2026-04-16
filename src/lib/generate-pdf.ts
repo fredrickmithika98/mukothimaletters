@@ -288,11 +288,7 @@ export async function generateAdmissionLetter(
   y += piLines.length * lineHeight + 3;
 
   const paySteps = [
-    "Go to Lipa na M-Pesa",
-    "Pay Bill 222222",
-    "Account No. APPF-NAME",
-    "Amount.......",
-    "M-Pesa Pin",
+    
   ];
   for (const step of paySteps) {
     doc.text(step, margin + 5, y);
@@ -300,7 +296,7 @@ export async function generateAdmissionLetter(
   }
   y += 2;
 
-  const afterPay = "After payment, print your M-Pesa SMS and attach it to your academic documents for admission number processing.";
+  const afterPay = ".";
   const apLines = doc.splitTextToSize(afterPay, contentWidth);
   doc.text(apLines, margin, y);
   y += apLines.length * lineHeight + 4;

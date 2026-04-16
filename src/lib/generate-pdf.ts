@@ -110,9 +110,9 @@ export async function generateAdmissionLetter(applicant: ApplicantData, result: 
   // ===== HEADER WITH LOGO =====
   if (logoData) {
     const logoWidth = contentWidth;
-    const logoHeight = 22;
-    doc.addImage(logoData, "JPEG", margin, y - 5, logoWidth, logoHeight);
-    y += logoHeight + 3;
+    const logoHeight = 18;
+    doc.addImage(logoData, "JPEG", margin, y - 4, logoWidth, logoHeight);
+    y += logoHeight + 2;
   } else {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);

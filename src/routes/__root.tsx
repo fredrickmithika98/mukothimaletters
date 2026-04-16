@@ -36,7 +36,7 @@ export const Route = createRootRoute({
       { property: "og:description", content: "Generate your official admission letter based on KCSE results. Check eligibility for Diploma and Certificate courses." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Admission Letter Generator | Kenya National Polytechnic" },
+      { name: "twitter:title", content: "Admission Letter Generator | Tharaka Univeristy Mukothima Centre" },
       { name: "twitter:description", content: "Generate your official admission letter based on KCSE results. Check eligibility for Diploma and Certificate courses." },
     ],
     links: [

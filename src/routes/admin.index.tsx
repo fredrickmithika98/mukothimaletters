@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
@@ -46,13 +47,23 @@ interface Course {
   is_active: boolean;
 }
 
+interface LetterTemplate {
+  id: string;
+  template_key: string;
+  label: string;
+  content: string;
+}
+
 function AdminDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [downloads, setDownloads] = useState<Download[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [activeTab, setActiveTab] = useState<"downloads" | "courses">("downloads");
+  const [templates, setTemplates] = useState<LetterTemplate[]>([]);
+  const [activeTab, setActiveTab] = useState<"downloads" | "courses" | "templates">("downloads");
   const [searchTerm, setSearchTerm] = useState("");
+  const [savingTemplates, setSavingTemplates] = useState(false);
+  const [templateEdits, setTemplateEdits] = useState<Record<string, string>>({});
 
   // Course form state
   const [courseDialogOpen, setCourseDialogOpen] = useState(false);
@@ -85,7 +96,7 @@ function AdminDashboard() {
       return;
     }
 
-    await Promise.all([fetchDownloads(), fetchCourses()]);
+    await Promise.all([fetchDownloads(), fetchCourses(), fetchTemplates()]);
     setLoading(false);
   }
 
@@ -104,6 +115,33 @@ function AdminDashboard() {
       .order("category", { ascending: true })
       .order("name", { ascending: true });
     if (data) setCourses(data);
+  }
+
+  async function fetchTemplates() {
+    const { data } = await supabase
+      .from("letter_templates")
+      .select("*")
+      .order("template_key", { ascending: true });
+    if (data) {
+      setTemplates(data);
+      const edits: Record<string, string> = {};
+      data.forEach((t) => { edits[t.template_key] = t.content; });
+      setTemplateEdits(edits);
+    }
+  }
+
+  async function handleSaveTemplates() {
+    setSavingTemplates(true);
+    const updates = templates.map((t) =>
+      supabase
+        .from("letter_templates")
+        .update({ content: templateEdits[t.template_key] ?? t.content })
+        .eq("id", t.id)
+    );
+    await Promise.all(updates);
+    await fetchTemplates();
+    setSavingTemplates(false);
+    alert("All templates saved successfully!");
   }
 
   async function handleLogout() {
@@ -173,6 +211,17 @@ function AdminDashboard() {
   const certificateCount = downloads.filter((d) => d.category === "Certificate").length;
   const uniqueApplicants = new Set(downloads.map((d) => d.index_number)).size;
 
+  // Group templates by category for the editor
+  const templateGroups = [
+    { title: "Letter Body Text", keys: ["body_intro", "semester_info"] },
+    { title: "Conditions", keys: ["conditions_heading", "condition_1", "condition_2", "condition_3"] },
+    { title: "Fee Amounts - Diploma", keys: ["diploma_admission_fee", "diploma_fee_regular_tuition_y1s1", "diploma_fee_regular_tuition_y1s2", "diploma_fee_odel_tuition_y1s1", "diploma_fee_odel_tuition_y1s2", "diploma_fee_odel_tuition_y2s1", "diploma_fee_odel_tuition_y2s2"] },
+    { title: "Fee Amounts - Certificate", keys: ["certificate_admission_fee", "cert_fee_regular_tuition_y1s1", "cert_fee_regular_tuition_y1s2", "cert_fee_odel_tuition_y1s1", "cert_fee_odel_tuition_y1s2"] },
+    { title: "Payment Instructions", keys: ["fee_note", "payment_instruction", "mpesa_line_1", "mpesa_line_2", "mpesa_line_3", "mpesa_line_4", "mpesa_line_5", "after_payment"] },
+    { title: "Additional Notes", keys: ["arrangement_note", "nb_diploma", "nb_certificate", "contact_info", "closing_text"] },
+    { title: "Signatory & Footer", keys: ["signatory_name", "signatory_title", "footer_line_1", "footer_line_2"] },
+  ];
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -238,6 +287,12 @@ function AdminDashboard() {
             onClick={() => setActiveTab("courses")}
           >
             Manage Courses
+          </Button>
+          <Button
+            variant={activeTab === "templates" ? "default" : "outline"}
+            onClick={() => setActiveTab("templates")}
+          >
+            ✏️ Edit Letter
           </Button>
         </div>
 
@@ -412,6 +467,55 @@ function AdminDashboard() {
               )}
             </CardContent>
           </Card>
+        )}
+
+        {/* Letter Templates Tab */}
+        {activeTab === "templates" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-foreground">Edit Admission Letter</h2>
+                <p className="text-sm text-muted-foreground">
+                  Edit any section below. Use <code className="bg-muted px-1 rounded text-xs">{"{{courseName}}"}</code>, <code className="bg-muted px-1 rounded text-xs">{"{{faculty}}"}</code>, <code className="bg-muted px-1 rounded text-xs">{"{{semesters}}"}</code>, <code className="bg-muted px-1 rounded text-xs">{"{{admissionFee}}"}</code> as placeholders.
+                </p>
+              </div>
+              <Button onClick={handleSaveTemplates} disabled={savingTemplates}>
+                {savingTemplates ? "Saving..." : "💾 Save All Changes"}
+              </Button>
+            </div>
+
+            {templateGroups.map((group) => (
+              <Card key={group.title}>
+                <CardHeader>
+                  <CardTitle className="text-base">{group.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {group.keys.map((key) => {
+                    const tpl = templates.find((t) => t.template_key === key);
+                    if (!tpl) return null;
+                    const isShort = key.startsWith("mpesa_") || key.startsWith("signatory_") || key.startsWith("footer_") || key.includes("admission_fee") || key.includes("tuition");
+                    return (
+                      <div key={key} className="space-y-1">
+                        <Label className="text-sm font-medium">{tpl.label}</Label>
+                        {isShort ? (
+                          <Input
+                            value={templateEdits[key] ?? tpl.content}
+                            onChange={(e) => setTemplateEdits((prev) => ({ ...prev, [key]: e.target.value }))}
+                          />
+                        ) : (
+                          <Textarea
+                            value={templateEdits[key] ?? tpl.content}
+                            onChange={(e) => setTemplateEdits((prev) => ({ ...prev, [key]: e.target.value }))}
+                            rows={3}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
     </div>

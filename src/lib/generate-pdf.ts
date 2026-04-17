@@ -193,39 +193,18 @@ y += 8; // space after line
   // Build paragraph with mixed bold/normal
   const lineHeight = 4.5;
 
-  // ===== First body paragraph: Times New Roman, 12pt, Justified =====
-doc.setFont("times", "normal");
-doc.setFontSize(12);
+  // First body paragraph
+  doc.setFont("helvetica", "normal");
+  const bodyP1 = `Following your completion of form four studies, we are pleased to inform you that you have been offered provisional admission to Tharaka University, Mukothima Centre for a ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year.`;
+  const p1Lines = doc.splitTextToSize(bodyP1, contentWidth);
+  doc.text(p1Lines, margin, y);
+  y += p1Lines.length * lineHeight + 3;
 
-const bodyP1 = `Following your completion of form four studies, we are pleased to inform you that you have been offered provisional admission to Tharaka University, Mukothima Centre for a ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year.`;
-
-// Split text to fit width
-const p1Lines = doc.splitTextToSize(bodyP1, contentWidth);
-
-// Draw justified paragraph
-doc.text(p1Lines, margin, y, {
-  maxWidth: contentWidth,
-  align: "justify",
-});
-
-y += p1Lines.length * lineHeight + 3;
-
-  // Set font (Times New Roman equivalent) + size 12
-doc.setFont("times", "normal");
-doc.setFontSize(12);
-
-// Second body paragraph - JUSTIFIED
-const bodyP2 = `The program is designed to take four semesters. All new students will be required to report to the University for registration and commencement of first semester studies of the 2026/2027 academic year on Monday 24/08/2026.`;
-
-// draw justified paragraph
-y = addJustifiedText(
-  doc,
-  bodyP2,
-  margin,
-  y,
-  contentWidth,
-  lineHeight
-) + 3;
+  // Second body paragraph
+  const bodyP2 = `The program is designed to take four semesters. All new students will be required to report to the University for registration and commencement of first semester studies of 2026/2027 academic year on Monday 24/08/2026.`;
+  const p2Lines = doc.splitTextToSize(bodyP2, contentWidth);
+  doc.text(p2Lines, margin, y);
+  y += p2Lines.length * lineHeight + 3;
 
   // Conditions intro
   const condIntro = "Your registration as a student of Tharaka University shall be subject to the following conditions:";
@@ -312,27 +291,17 @@ if (isDiploma) {
 
   /* ================= POST-TABLE CONTENT ================= */
   y += 5;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
 
-// Set Times New Roman equivalent + size 12
-doc.setFont("times", "normal");
-doc.setFontSize(12);
-
-const feesNote =
-  "Please note that the University fees and other charges are determined by the University Council. The Council may revise the fees structure at any time it deems necessary.";
-
-// JUSTIFIED TEXT (replace splitTextToSize)
-y = addJustifiedText(
-  doc,
-  feesNote,
-  margin,
-  y,
-  contentWidth,
-  lineHeight
-) + 4;
+  const feesNote = "Please note that the University fees and other charges are determined by the University Council. The Council may revise the fees structure at any time it deems necessary.";
+  const fnLines = doc.splitTextToSize(feesNote, contentWidth);
+  doc.text(fnLines, margin, y);
+  y += fnLines.length * lineHeight + 4;
 
   /* ================= PAYMENT INSTRUCTIONS ================= */
-doc.setFont("times", "bold");
-doc.setFontSize(12);
+doc.setFont("helvetica", "bold");
+doc.setFontSize(9);
 
 const payIntro =
   "All students MUST pay the required 2000 non-refundable admission fees through Government E-CITIZEN platform:";
@@ -343,8 +312,8 @@ doc.text(piLines, margin, y);
 y += piLines.length * lineHeight + 3;
 
 // Steps (normal text)
-doc.setFont("times", "normal");
-doc.setFontSize(12);
+doc.setFont("helvetica", "normal");
+doc.setFontSize(9);
 
 const paySteps = [];
 
@@ -366,29 +335,19 @@ y += 2;
   }
 
   /* ================= ADDITIONAL NOTES ================= */
-  doc.setFont("times", "normal");
-doc.setFontSize(12);
-
-const arrangements =
-  "You will also be required to make your own arrangements during the year to meet catering, exercise books & stationery and accommodation expenses.";
-
-// JUSTIFIED TEXT (replace splitTextToSize version)
-y = addJustifiedText(
-  doc,
-  arrangements,
-  margin,
-  y,
-  contentWidth,
-  lineHeight
-) + 4;
+  doc.setFont("helvetica", "normal");
+  const arrangements = "You will also be required to make your own arrangements during the year to meet catering, exercise books & stationery and accommodation expenses.";
+  const arrLines = doc.splitTextToSize(arrangements, contentWidth);
+  doc.text(arrLines, margin, y);
+  y += arrLines.length * lineHeight + 4;
 
   // HELB note (only for Diploma)
 if (isDiploma) {
   const helb =
     "NB/ you will be LEGIBLE FOR GOVERNMENT HELB LOAN and credit transfer that may allow you to complete the degree course in three (3) years after graduating with a diploma.";
 
-  doc.setFont("times", "bold");   // set bold first
-  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");   // set bold first
+  doc.setFontSize(9);
 
   const hLines = doc.splitTextToSize(helb, contentWidth);
   doc.text(hLines, margin, y);
@@ -397,8 +356,8 @@ if (isDiploma) {
   }
 
   /* ================= CONTACT & ACCEPTANCE ================= */
- doc.setFont("times", "bold");
-doc.setFontSize(12);
+ doc.setFont("helvetica", "bold");
+doc.setFontSize(9);
 doc.setTextColor(0, 51, 153); // strong blue
 
 const contact =

@@ -193,12 +193,22 @@ y += 8; // space after line
   // Build paragraph with mixed bold/normal
   const lineHeight = 4.5;
 
-  // First body paragraph
-  doc.setFont("helvetica", "normal");
-  const bodyP1 = `Following your completion of form four studies, we are pleased to inform you that you have been offered provisional admission to Tharaka University, Mukothima Centre for a ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year.`;
-  const p1Lines = doc.splitTextToSize(bodyP1, contentWidth);
-  doc.text(p1Lines, margin, y);
-  y += p1Lines.length * lineHeight + 3;
+  // ===== First body paragraph: Times New Roman, 12pt, Justified =====
+doc.setFont("times", "normal");
+doc.setFontSize(12);
+
+const bodyP1 = `Following your completion of form four studies, we are pleased to inform you that you have been offered provisional admission to Tharaka University, Mukothima Centre for a ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year.`;
+
+// Split text to fit width
+const p1Lines = doc.splitTextToSize(bodyP1, contentWidth);
+
+// Draw justified paragraph
+doc.text(p1Lines, margin, y, {
+  maxWidth: contentWidth,
+  align: "justify",
+});
+
+y += p1Lines.length * lineHeight + 3;
 
   // Second body paragraph
   const bodyP2 = `The program is designed to take four semesters. All new students will be required to report to the University for registration and commencement of first semester studies of 2026/2027 academic year on Monday 24/08/2026.`;

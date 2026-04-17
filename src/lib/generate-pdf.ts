@@ -22,7 +22,7 @@ function t(templates: Templates, key: string, fallback: string): string {
   return templates[key] ?? fallback;
 }
 
-/* ================= IMAGE LOADER ================= */
+/* ================= IMAGE LOADER ================ */
 async function loadImageAsBase64(url: string): Promise<string> {
   const res = await fetch(url);
   const blob = await res.blob();
@@ -140,7 +140,7 @@ export async function generateAdmissionLetter(
     y += 20;
   }
 
-  /* ================= OFFICE LINE ================= */
+  //* ================= OFFICE LINE ================= */
 doc.setFont("helvetica", "bold");
 doc.setFontSize(11);
 doc.text("OFFICE OF THE REGISTRAR", pageWidth / 2, y, { align: "center" });
@@ -149,12 +149,16 @@ y += 5;
 doc.setFontSize(10);
 doc.text("(Academic Affairs)", pageWidth / 2, y, { align: "center" });
 
-/* ===== BOLD FULL-WIDTH LINE ===== */
-y += 6; // space before line
-doc.setLineWidth(1.2); // make line bold/thick
+/* ===== BOLD FULL-WIDTH BLACK LINE ===== */
+y += 6;
+
+// FORCE BLACK COLOR + THICK LINE
+doc.setDrawColor(0, 0, 0);   // black
+doc.setLineWidth(1.5);       // bold thickness
+
 doc.line(margin, y, pageWidth - margin, y);
 
-y += 6; // space after line
+y += 8; // space after line
 
   /* ================= DATE ================= */
   y += 7;
@@ -191,13 +195,13 @@ y += 6; // space after line
 
   // First body paragraph
   doc.setFont("helvetica", "normal");
-  const bodyP1 = `Following your completion of form four studies, we are pleased to inform you that you have been offered provisional admission to Tharaka University, Mukothima Center for a ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year.`;
+  const bodyP1 = `Following your completion of form four studies, we are pleased to inform you that you have been offered provisional admission to Tharaka University, Mukothima Centre for a ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year.`;
   const p1Lines = doc.splitTextToSize(bodyP1, contentWidth);
   doc.text(p1Lines, margin, y);
   y += p1Lines.length * lineHeight + 3;
 
   // Second body paragraph
-  const bodyP2 = `The program is designed to take four semesters. All new students will be required to report to the University for registration and commencement of first semester studies of 2026/2027 academic year on Tuesday 15/09/2026.`;
+  const bodyP2 = `The program is designed to take four semesters. All new students will be required to report to the University for registration and commencement of first semester studies of 2026/2027 academic year on Monday 24/08/2026.`;
   const p2Lines = doc.splitTextToSize(bodyP2, contentWidth);
   doc.text(p2Lines, margin, y);
   y += p2Lines.length * lineHeight + 3;
@@ -289,21 +293,29 @@ y += 6; // space after line
   y += fnLines.length * lineHeight + 4;
 
   /* ================= PAYMENT INSTRUCTIONS ================= */
-  doc.setFont("helvetica", "bold");
-  const payIntro = "All students MUST pay the required 2000 non-refundable admission fees through Government E-CITIZEN platform:";
-  const piLines = doc.splitTextToSize(payIntro, contentWidth);
-  doc.text(piLines, margin, y);
-  y += piLines.length * lineHeight + 3;
+doc.setFont("helvetica", "bold");
+doc.setFontSize(9);
 
-  const paySteps = [
-    
-  ];
-  for (const step of paySteps) {
-    doc.text(step, margin + 5, y);
-    y += lineHeight + 0.5;
-  }
-  y += 2;
+const payIntro =
+  "All students MUST pay the required 2000 non-refundable admission fees through Government E-CITIZEN platform:";
 
+const piLines = doc.splitTextToSize(payIntro, contentWidth);
+doc.text(piLines, margin, y);
+
+y += piLines.length * lineHeight + 3;
+
+// Steps (normal text)
+doc.setFont("helvetica", "normal");
+doc.setFontSize(9);
+
+const paySteps = [];
+
+for (const step of paySteps) {
+  doc.text(step, margin + 5, y);
+  y += lineHeight + 0.5;
+}
+
+y += 2;
   const afterPay = ".";
   const apLines = doc.splitTextToSize(afterPay, contentWidth);
   doc.text(apLines, margin, y);
@@ -323,20 +335,34 @@ y += 6; // space after line
   y += arrLines.length * lineHeight + 4;
 
   // HELB note (only for Diploma)
-  if (isDiploma) {
-    doc.setFont("helvetica", "bold");
-    const helb = "NB/ you will be LEGIBLE FOR GOVERNMENT HELB LOAN and credit transfer that may allow you to complete the degree course in three (3) years after graduating with a diploma.";
-    const hLines = doc.splitTextToSize(helb, contentWidth);
-    doc.text(hLines, margin, y);
-    y += hLines.length * lineHeight + 4;
+if (isDiploma) {
+  const helb =
+    "NB/ you will be LEGIBLE FOR GOVERNMENT HELB LOAN and credit transfer that may allow you to complete the degree course in three (3) years after graduating with a diploma.";
+
+  doc.setFont("helvetica", "bold");   // set bold first
+  doc.setFontSize(9);
+
+  const hLines = doc.splitTextToSize(helb, contentWidth);
+  doc.text(hLines, margin, y);
+
+  y += hLines.length * (lineHeight + 0.5) + 5; // better spacing
   }
 
   /* ================= CONTACT & ACCEPTANCE ================= */
-  doc.setFont("helvetica", "normal");
-  const contact = "If you accept the offer under these conditions, contact Mobile No. 0720021155 - Dr. Faustine Muchui. to formalize your admission.";
-  const ctLines = doc.splitTextToSize(contact, contentWidth);
-  doc.text(ctLines, margin, y);
-  y += ctLines.length * lineHeight + 4;
+ doc.setFont("helvetica", "bold");
+doc.setFontSize(9);
+doc.setTextColor(0, 51, 153); // strong blue
+
+const contact =
+  "If you accept the offer under these conditions, contact Mobile No. 0720021155 - Dr. Faustine Muchui. to formalize your admission.";
+
+const ctLines = doc.splitTextToSize(contact, contentWidth);
+doc.text(ctLines, margin, y);
+
+y += ctLines.length * lineHeight + 4;
+
+// Reset color back to black for next text
+doc.setTextColor(0, 0, 0);
 
   const closing = "We look forward to you joining Tharaka University - Mukothima Centre and on behalf of the Vice Chancellor, I wish you success in your future studies at our institution.";
   const clLines = doc.splitTextToSize(closing, contentWidth);
@@ -344,21 +370,23 @@ y += 6; // space after line
   y += clLines.length * lineHeight + 5;
 
   /* ================= SIGNATURE ================= */
-  doc.text("Yours Faithfully,", margin, y);
-  y += 3;
+doc.text("Yours Faithfully,", margin, y);
+y += 3;
 
-  try {
-    const sigImg = await loadImageAsBase64("/images/registrar-signature.png");
-    doc.addImage(sigImg, "PNG", margin, y, 30, 12);
-    y += 14;
-  } catch {
-    y += 12;
-  }
+try {
+  const sigImg = await loadImageAsBase64("/images/registrar-signature.png");
+  doc.addImage(sigImg, "PNG", margin, y, 30, 12);
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Dr. Daniel Mwangi", margin, y);
-  y += 4.5;
-  doc.text("Ag. Registrar (Academic Affairs)", margin, y);
+  y += 18; // ⬅️ increased space after signature image
+} catch {
+  y += 16; // keep similar spacing if no image
+}
 
-  doc.save(`Admission_Letter_${applicant.fullName}.pdf`);
+doc.setFont("helvetica", "bold");
+doc.text("Dr. Daniel Mwangi", margin, y);
+
+y += 5;
+doc.text("Ag. Registrar (Academic Affairs)", margin, y);
+
+doc.save(`Admission_Letter_${applicant.fullName}.pdf`);
 }

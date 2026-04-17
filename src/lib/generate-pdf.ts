@@ -66,7 +66,7 @@ function drawTable(
       doc.setLineWidth(0.2);
       doc.rect(x, yPos, colWidths[i], rowHeight);
 
-      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.setFont("times", bold ? "bold" : "normal");
       doc.setFontSize(fontSize);
       if (textColor) {
         doc.setTextColor(...textColor);
@@ -134,7 +134,7 @@ export async function generateAdmissionLetter(
     y += imgHeight + 4;
   } catch {
     // Fallback text header if image fails
-    doc.setFont("helvetica", "bold");
+    doc.setFont("times", "bold");
     doc.setFontSize(16);
     doc.text("THARAKA UNIVERSITY", pageWidth / 2, y + 10, { align: "center" });
     y += 20;
@@ -162,8 +162,8 @@ y += 8; // space after line
 
   /* ================= DATE ================= */
   y += 7;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
+  doc.setFont("times", "bold");
+  doc.setFontSize(10);
   const today = new Date();
   const months = [
     "January", "February", "March", "April", "May", "June",
@@ -248,7 +248,7 @@ if (isDiploma) {
     { sn: "6", item: "Material development per year", values: ["3,000", "", "", ""] },
     { sn: "7", item: "Students Union 1st year", values: ["1,000", "", "", ""] },
     { sn: "8", item: "Caution money once", values: ["2,000", "", "", ""] },
-    { sn: "9", item: "Student ID once", values: ["500", "", "", ""] },
+    { sn: "10", item: "Student ID once", values: ["500", "", "", ""] },
   ];
 
   const totals = [
@@ -277,7 +277,7 @@ if (isDiploma) {
   ];
 
   const totals = [
-    ["", "TOTAL", "39,500", "30,000"],
+    ["", "TOTAL", "310,500", "30,000"],
   ];
 
   const colWidths = [10, 80, 30, 30];
@@ -291,7 +291,7 @@ if (isDiploma) {
 
   /* ================= POST-TABLE CONTENT ================= */
   y += 5;
-  doc.setFont("helvetica", "normal");
+  doc.setFont("times", "normal");
   doc.setFontSize(10);
 
   const feesNote = "Please note that the University fees and other charges are determined by the University Council. The Council may revise the fees structure at any time it deems necessary.";

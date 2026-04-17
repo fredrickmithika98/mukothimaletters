@@ -193,50 +193,32 @@ y += 8; // space after line
   // Build paragraph with mixed bold/normal
   const lineHeight = 4.5;
 
- // Set base font (Times New Roman equivalent in jsPDF is "times")
 doc.setFont("times", "normal");
-doc.setFontSize(12);
+doc.text(
+  "Following your completion of form four studies, we are pleased to inform you that you have been offered provisional admission to",
+  margin,
+  y
+);
 
-const boldPart = "Tharaka University, Mukothima Centre for a Diploma in Accounting in the Faculty of Business Studies";
+y += lineHeight;
 
-const normalPart = `Following your completion of form four studies, we are pleased to inform you that you have been offered provisional admission to ` +
-  `${boldPart} for the 2026/2027 academic year.`;
+doc.setFont("times", "bold");
+doc.text(
+  "Tharaka University, Mukothima Centre for a Diploma in Accounting in the Faculty of Business Studies",
+  margin,
+  y
+);
 
-// Split text for wrapping
-const lines = doc.splitTextToSize(normalPart, contentWidth);
+y += lineHeight;
 
-// Track Y position
-let currentY = y;
+doc.setFont("times", "normal");
+doc.text(
+  "for the 2026/2027 academic year.",
+  margin,
+  y
+);
 
-// Loop through lines and manually apply bold only where needed
-lines.forEach(line => {
-  if (line.includes("Tharaka University")) {
-    // Split around bold phrase
-    const parts = line.split(boldPart);
-
-    // Normal text before bold
-    doc.setFont("times", "normal");
-    doc.text(parts[0], margin, currentY);
-
-    // Bold text
-    const xOffset = doc.getTextWidth(parts[0]);
-    doc.setFont("times", "bold");
-    doc.text(boldPart, margin + xOffset, currentY);
-
-    // Normal text after bold
-    const xOffset2 = doc.getTextWidth(parts[0] + boldPart);
-    doc.setFont("times", "normal");
-    doc.text(parts[1] || "", margin + xOffset2, currentY);
-  } else {
-    doc.setFont("times", "normal");
-    doc.text(line, margin, currentY);
-  }
-
-  currentY += lineHeight;
-});
-
-// update y position
-y = currentY + 3;
+y += lineHeight + 3;
 
   // Second body paragraph
   const bodyP2 = `The program is designed to take four semesters. All new students will be required to report to the University for registration and commencement of first semester studies of 2026/2027 academic year on Monday 24/08/2026.`;

@@ -292,7 +292,7 @@ if (isDiploma) {
   /* ================= POST-TABLE CONTENT ================= */
   y += 5;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(10);
 
   const feesNote = "Please note that the University fees and other charges are determined by the University Council. The Council may revise the fees structure at any time it deems necessary.";
   const fnLines = doc.splitTextToSize(feesNote, contentWidth);
@@ -301,7 +301,7 @@ if (isDiploma) {
 
   /* ================= PAYMENT INSTRUCTIONS ================= */
 doc.setFont("times", "bold");
-doc.setFontSize(12);
+doc.setFontSize(10);
 
 const payIntro =
   "All students MUST pay the required 2000 non-refundable admission fees through Government E-CITIZEN platform:";
@@ -313,7 +313,7 @@ y += piLines.length * lineHeight + 3;
 
 // Steps (normal text)
 doc.setFont("times", "normal");
-doc.setFontSize(12);
+doc.setFontSize(10);
 
 const paySteps: string[] = [];
 
@@ -347,7 +347,7 @@ if (isDiploma) {
     "NB/ you will be LEGIBLE FOR GOVERNMENT HELB LOAN and credit transfer that may allow you to complete the degree course in three (3) years after graduating with a diploma.";
 
   doc.setFont("times", "bold");   // set bold first
-  doc.setFontSize(12);
+  doc.setFontSize(10);
 
   const hLines = doc.splitTextToSize(helb, contentWidth);
   doc.text(hLines, margin, y);
@@ -357,7 +357,7 @@ if (isDiploma) {
 
   /* ================= CONTACT & ACCEPTANCE ================= */
  doc.setFont("times", "bold");
-doc.setFontSize(12);
+doc.setFontSize(10);
 doc.setTextColor(0, 51, 153); // strong blue
 
 const contact =

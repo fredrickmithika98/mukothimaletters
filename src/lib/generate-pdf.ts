@@ -232,55 +232,62 @@ y += 8; // space after line
   doc.text("Payment of all fees and charges as set out below:", indentX, y);
   y += lineHeight + 4;
 
-  /* ================= FEE TABLE ================= */
-  if (isDiploma) {
-    // Diploma fee table matching DOCX
-    const headers = [
-      ["S/N", "REGULAR OPTION", "", "", "ODeL PROGRAMME OPTION", "", "", ""],
-      ["", "", "Y1S1", "Y1S2", "Y1S1", "Y1S2", "Y2S1", "Y2S2"],
-    ];
-    const rows: FeeRow[] = [
-      { sn: "1", item: "Tuition fee per year", values: ["35,000", "35,000", "26,000", "26,000", "26,000", "26,000"] },
-      { sn: "2", item: "Registration fee per year", values: ["1,000", "", "1,000", "", "1,000", ""] },
-      { sn: "3", item: "Library per year", values: ["2,000", "", "2,000", "", "2,000", ""] },
-      { sn: "4", item: "Activity fee per year", values: ["1,000", "", "", "", "", ""] },
-      { sn: "5", item: "Examination fee per year", values: ["3,000", "", "3,000", "", "3,000", ""] },
-      { sn: "6", item: "Material development per year", values: ["3,000", "", "", "", "", ""] },
-      { sn: "7", item: "Students Union 1st year", values: ["1,000", "", "1,000", "", "", ""] },
-      { sn: "8", item: "Caution money once", values: ["2,000", "", "2,000", "", "", ""] },
-      { sn: "9", item: "Student ID once", values: ["500", "", "500", "", "", ""] },
-    ];
-    const totals = [
-      ["", "TOTAL", "48,500", "35,000", "35,500", "26,000", "32,000", "26,000"],
-      ["", "TOTAL PER YEAR", "83,500", "", "61,500", "", "58,000", ""],
-    ];
-    const colWidths = [10, 48, 20, 20, 20, 20, 20, 20];
+/* ================= FEE TABLE ================= */
+if (isDiploma) {
+  // ===== DIPLOMA (REGULAR ONLY) =====
+  const headers = [
+    ["S/N", "ITEM", "Y1S1", "Y1S2", "Y2S1", "Y2S2"],
+  ];
 
-    y = drawTable(doc, y, headers, rows, totals, colWidths, margin);
-  } else {
-    // Certificate fee table
-    const headers = [
-      ["S/N", "ITEM", "REGULAR", "", "ODeL", ""],
-      ["", "", "Y1S1", "Y1S2", "Y1S1", "Y1S2"],
-    ];
-    const rows: FeeRow[] = [
-      { sn: "1", item: "Tuition fee per year", values: ["30,000", "30,000", "17,500", "17,500"] },
-      { sn: "2", item: "Registration fee", values: ["1,000", "", "1,000", ""] },
-      { sn: "3", item: "Library fee", values: ["2,000", "", "2,000", ""] },
-      { sn: "4", item: "Examination fee", values: ["2,000", "", "3,000", ""] },
-      { sn: "5", item: "Activity fee", values: ["1,000", "", "", ""] },
-      { sn: "6", item: "Students Union", values: ["1,000", "", "1,000", ""] },
-      { sn: "7", item: "Caution money once", values: ["2,000", "", "2,000", ""] },
-      { sn: "8", item: "Student ID once", values: ["500", "", "500", ""] },
-    ];
-    const totals = [
-      ["", "TOTAL", "39,500", "30,000", "27,000", "17,500"],
-      ["", "TOTAL PER YEAR", "69,500", "", "44,500", ""],
-    ];
-    const colWidths = [10, 60, 25, 25, 25, 25];
+  const rows: FeeRow[] = [
+    { sn: "1", item: "Tuition fee per year", values: ["35,000", "35,000", "", ""] },
+    { sn: "2", item: "Registration fee per year", values: ["1,000", "", "", ""] },
+    { sn: "3", item: "Library per year", values: ["2,000", "", "", ""] },
+    { sn: "4", item: "Activity fee per year", values: ["1,000", "", "", ""] },
+    { sn: "5", item: "Examination fee per year", values: ["3,000", "", "", ""] },
+    { sn: "6", item: "Material development per year", values: ["3,000", "", "", ""] },
+    { sn: "7", item: "Students Union 1st year", values: ["1,000", "", "", ""] },
+    { sn: "8", item: "Caution money once", values: ["2,000", "", "", ""] },
+    { sn: "9", item: "Student ID once", values: ["500", "", "", ""] },
+  ];
 
-    y = drawTable(doc, y, headers, rows, totals, colWidths, margin);
-  }
+  const totals = [
+    ["", "TOTAL", "48,500", "35,000", "", ""],
+  ];
+
+  const colWidths = [10, 70, 25, 25, 25, 25];
+
+  y = drawTable(doc, y, headers, rows, totals, colWidths, margin);
+
+} else {
+  // ===== CERTIFICATE (REGULAR ONLY) =====
+  const headers = [
+    ["S/N", "ITEM", "Y1S1", "Y1S2"],
+  ];
+
+  const rows: FeeRow[] = [
+    { sn: "1", item: "Tuition fee per year", values: ["30,000", "30,000"] },
+    { sn: "2", item: "Registration fee", values: ["1,000", ""] },
+    { sn: "3", item: "Library fee", values: ["2,000", ""] },
+    { sn: "4", item: "Examination fee", values: ["2,000", ""] },
+    { sn: "5", item: "Activity fee", values: ["1,000", ""] },
+    { sn: "6", item: "Students Union", values: ["1,000", ""] },
+    { sn: "7", item: "Caution money once", values: ["2,000", ""] },
+    { sn: "8", item: "Student ID once", values: ["500", ""] },
+  ];
+
+  const totals = [
+    ["", "TOTAL", "39,500", "30,000"],
+  ];
+
+  const colWidths = [10, 80, 30, 30];
+
+  y = drawTable(doc, y, headers, rows, totals, colWidths, margin);
+}
+
+
+
+
 
   /* ================= POST-TABLE CONTENT ================= */
   y += 5;

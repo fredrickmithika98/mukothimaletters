@@ -188,13 +188,13 @@ y += 8; // space after line
 
   /* ================= BODY PARAGRAPH 1 ================= */
   y += 8;
-  doc.setFontSize(9);
+  doc.setFontSize(10);
 
   // Build paragraph with mixed bold/normal
   const lineHeight = 4.5;
 
   // First body paragraph
-  doc.setFont("helvetica", "normal");
+  doc.setFont("times", "normal");
   const bodyP1 = `Following your completion of form four studies, we are pleased to inform you that you have been offered provisional admission to Tharaka University, Mukothima Centre for a ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year.`;
   const p1Lines = doc.splitTextToSize(bodyP1, contentWidth);
   doc.text(p1Lines, margin, y);

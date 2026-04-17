@@ -315,7 +315,7 @@ y += piLines.length * lineHeight + 3;
 doc.setFont("times", "normal");
 doc.setFontSize(12);
 
-const paySteps = [];
+const paySteps: string[] = [];
 
 for (const step of paySteps) {
   doc.text(step, margin + 5, y);

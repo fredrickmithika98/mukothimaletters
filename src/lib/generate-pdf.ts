@@ -141,7 +141,7 @@ export async function generateAdmissionLetter(
   }
 
   //* ================= OFFICE LINE ================= */
-doc.setFont("helvetica", "bold");
+doc.setFont("times", "bold");
 doc.setFontSize(11);
 doc.text("OFFICE OF THE REGISTRAR", pageWidth / 2, y, { align: "center" });
 

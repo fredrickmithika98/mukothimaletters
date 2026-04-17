@@ -176,14 +176,14 @@ y += 8; // space after line
 
   /* ================= TITLE ================= */
   y += 8;
-  doc.setFont("helvetica", "bold");
+  doc.setFont("times", "bold");
   doc.setFontSize(11);
   doc.text("PROVISIONAL LETTER OF OFFER", pageWidth / 2, y, { align: "center" });
 
   /* ================= APPLICANT INFO ================= */
   y += 8;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
+  doc.setFont("times", "bold");
+  doc.setFontSize(12);
   doc.text(`Name: ${applicant.fullName}`, margin, y);
 
   /* ================= BODY PARAGRAPH 1 ================= */

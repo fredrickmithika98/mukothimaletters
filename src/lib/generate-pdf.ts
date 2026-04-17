@@ -300,8 +300,8 @@ if (isDiploma) {
   y += fnLines.length * lineHeight + 4;
 
   /* ================= PAYMENT INSTRUCTIONS ================= */
-doc.setFont("helvetica", "bold");
-doc.setFontSize(9);
+doc.setFont("times", "bold");
+doc.setFontSize(12);
 
 const payIntro =
   "All students MUST pay the required 2000 non-refundable admission fees through Government E-CITIZEN platform:";
@@ -312,8 +312,8 @@ doc.text(piLines, margin, y);
 y += piLines.length * lineHeight + 3;
 
 // Steps (normal text)
-doc.setFont("helvetica", "normal");
-doc.setFontSize(9);
+doc.setFont("times", "normal");
+doc.setFontSize(12);
 
 const paySteps = [];
 
@@ -335,7 +335,7 @@ y += 2;
   }
 
   /* ================= ADDITIONAL NOTES ================= */
-  doc.setFont("helvetica", "normal");
+  doc.setFont("times", "normal");
   const arrangements = "You will also be required to make your own arrangements during the year to meet catering, exercise books & stationery and accommodation expenses.";
   const arrLines = doc.splitTextToSize(arrangements, contentWidth);
   doc.text(arrLines, margin, y);
@@ -346,8 +346,8 @@ if (isDiploma) {
   const helb =
     "NB/ you will be LEGIBLE FOR GOVERNMENT HELB LOAN and credit transfer that may allow you to complete the degree course in three (3) years after graduating with a diploma.";
 
-  doc.setFont("helvetica", "bold");   // set bold first
-  doc.setFontSize(9);
+  doc.setFont("times", "bold");   // set bold first
+  doc.setFontSize(12);
 
   const hLines = doc.splitTextToSize(helb, contentWidth);
   doc.text(hLines, margin, y);
@@ -356,8 +356,8 @@ if (isDiploma) {
   }
 
   /* ================= CONTACT & ACCEPTANCE ================= */
- doc.setFont("helvetica", "bold");
-doc.setFontSize(9);
+ doc.setFont("times", "bold");
+doc.setFontSize(12);
 doc.setTextColor(0, 51, 153); // strong blue
 
 const contact =
@@ -389,7 +389,7 @@ try {
   y += 16; // keep similar spacing if no image
 }
 
-doc.setFont("helvetica", "bold");
+doc.setFont("times", "bold");
 doc.text("Dr. Daniel Mwangi", margin, y);
 
 y += 5;

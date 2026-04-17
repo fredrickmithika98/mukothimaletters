@@ -141,12 +141,20 @@ export async function generateAdmissionLetter(
   }
 
   /* ================= OFFICE LINE ================= */
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text("OFFICE OF THE REGISTRAR", pageWidth / 2, y, { align: "center" });
-  y += 5;
-  doc.setFontSize(10);
-  doc.text("(Academic Affairs)", pageWidth / 2, y, { align: "center" });
+doc.setFont("helvetica", "bold");
+doc.setFontSize(11);
+doc.text("OFFICE OF THE REGISTRAR", pageWidth / 2, y, { align: "center" });
+
+y += 5;
+doc.setFontSize(10);
+doc.text("(Academic Affairs)", pageWidth / 2, y, { align: "center" });
+
+/* ===== BOLD FULL-WIDTH LINE ===== */
+y += 6; // space before line
+doc.setLineWidth(1.2); // make line bold/thick
+doc.line(margin, y, pageWidth - margin, y);
+
+y += 6; // space after line
 
   /* ================= DATE ================= */
   y += 7;

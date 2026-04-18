@@ -203,13 +203,10 @@ doc.text(
 y += lineHeight;
 
 doc.setFont("times", "bold");
-doc.text(
-  "Tharaka University, Mukothima Centre for a Diploma in Accounting in the Faculty of Business Studies",
-  margin,
-  y
-);
-
-y += lineHeight;
+const admissionLine = `Tharaka University, Mukothima Centre for a ${result.courseName} in the ${result.faculty}`;
+const admissionLines = doc.splitTextToSize(admissionLine, contentWidth);
+doc.text(admissionLines, margin, y);
+y += admissionLines.length * lineHeight;
 
 doc.setFont("times", "normal");
 doc.text(
@@ -221,7 +218,8 @@ doc.text(
 y += lineHeight + 3;
 
   // Second body paragraph
-  const bodyP2 = `The program is designed to take four semesters. All new students will be required to report to the University for registration and commencement of first semester studies of 2026/2027 academic year on Monday 24/08/2026.`;
+  const semestersText = isDiploma ? "four semesters" : "two semesters";
+  const bodyP2 = `The program is designed to take ${semestersText}. All new students will be required to report to the University for registration and commencement of first semester studies of 2026/2027 academic year on Monday 24/08/2026.`;
   const p2Lines = doc.splitTextToSize(bodyP2, contentWidth);
   doc.text(p2Lines, margin, y);
   y += p2Lines.length * lineHeight + 3;

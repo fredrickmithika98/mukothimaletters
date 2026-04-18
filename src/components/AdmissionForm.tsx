@@ -35,6 +35,8 @@ export function AdmissionForm() {
     if (!fullName.trim()) errs.fullName = "Full name is required";
     if (!indexNumber.trim()) errs.indexNumber = "Index number is required";
     if (!phoneNumber.trim()) errs.phoneNumber = "Phone number is required";
+    if (!guardianName.trim()) errs.guardianName = "Parent/Guardian name is required";
+    if (!guardianPhone.trim()) errs.guardianPhone = "Parent/Guardian phone is required";
     if (!meanGrade) errs.meanGrade = "Mean grade is required";
     if (!selectedCourse) errs.selectedCourse = "Please select a course";
     setErrors(errs);

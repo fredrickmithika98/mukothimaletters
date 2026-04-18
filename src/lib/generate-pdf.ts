@@ -206,19 +206,14 @@ doc.text(
 y += lineHeight;
 
 doc.setFont("times", "bold");
-const admissionLine = `Tharaka University, Mukothima Centre for a ${result.courseName} in the ${result.faculty}`;
+
+const admissionLine = `Tharaka University, Mukothima Centre for a ${result.courseName} in the ${result.faculty} for the 2026/2027 academic year.`;
+
 const admissionLines = doc.splitTextToSize(admissionLine, contentWidth);
+
 doc.text(admissionLines, margin, y);
-y += admissionLines.length * lineHeight;
 
-doc.setFont("times", "normal");
-doc.text(
-  "for the 2026/2027 academic year.",
-  margin,
-  y
-);
-
-y += lineHeight + 3;
+y += admissionLines.length * lineHeight + 3;
 
   // Second body paragraph
   const semestersText = isDiploma ? "four semesters" : "two semesters";

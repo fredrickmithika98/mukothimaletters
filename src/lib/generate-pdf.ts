@@ -203,13 +203,10 @@ doc.text(
 y += lineHeight;
 
 doc.setFont("times", "bold");
-doc.text(
-  "Tharaka University, Mukothima Centre for a Diploma in Accounting in the Faculty of Business Studies",
-  margin,
-  y
-);
-
-y += lineHeight;
+const admissionLine = `Tharaka University, Mukothima Centre for a ${result.courseName} in the ${result.faculty}`;
+const admissionLines = doc.splitTextToSize(admissionLine, contentWidth);
+doc.text(admissionLines, margin, y);
+y += admissionLines.length * lineHeight;
 
 doc.setFont("times", "normal");
 doc.text(

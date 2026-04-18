@@ -298,7 +298,7 @@ if (isDiploma) {
   ];
 
   const totals = [
-    ["", "TOTAL", "310,500", "30,000"],
+    ["", "TOTAL", "38,500", "30,000"],
   ];
 
   const colWidths = [10, 80, 30, 30];

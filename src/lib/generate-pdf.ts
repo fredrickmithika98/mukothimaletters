@@ -254,26 +254,26 @@ y += lineHeight + 3;
 if (isDiploma) {
   // ===== DIPLOMA (REGULAR ONLY) =====
   const headers = [
-    ["S/N", "ITEM", "Y1S1", "Y1S2", "Y2S1", "Y2S2"],
+    ["S/N", "ITEM", "Y1S1", "Y1S2"],
   ];
 
   const rows: FeeRow[] = [
-    { sn: "1", item: "Tuition fee per year", values: ["35,000", "35,000", "", ""] },
-    { sn: "2", item: "Registration fee per year", values: ["1,000", "", "", ""] },
-    { sn: "3", item: "Library per year", values: ["2,000", "", "", ""] },
-    { sn: "4", item: "Activity fee per year", values: ["1,000", "", "", ""] },
-    { sn: "5", item: "Examination fee per year", values: ["3,000", "", "", ""] },
-    { sn: "6", item: "Material development per year", values: ["3,000", "", "", ""] },
-    { sn: "7", item: "Students Union 1st year", values: ["1,000", "", "", ""] },
-    { sn: "8", item: "Caution money once", values: ["2,000", "", "", ""] },
-    { sn: "10", item: "Student ID once", values: ["500", "", "", ""] },
+    { sn: "1", item: "Tuition fee per year", values: ["35,000", "35,000"] },
+    { sn: "2", item: "Registration fee per year", values: ["1,000", ""] },
+    { sn: "3", item: "Library per year", values: ["2,000", ""] },
+    { sn: "4", item: "Activity fee per year", values: ["1,000", ""] },
+    { sn: "5", item: "Examination fee per year", values: ["3,000", ""] },
+    { sn: "6", item: "Material development per year", values: ["3,000", ""] },
+    { sn: "7", item: "Students Union 1st year", values: ["1,000", ""] },
+    { sn: "8", item: "Caution money once", values: ["2,000", ""] },
+    { sn: "10", item: "Student ID once", values: ["500", ""] },
   ];
 
   const totals = [
-    ["", "TOTAL", "48,500", "35,000", "", ""],
+    ["", "TOTAL", "48,500", "35,000"],
   ];
 
-  const colWidths = [10, 70, 25, 25, 25, 25];
+  const colWidths = [10, 80, 30, 30];
 
   y = drawTable(doc, y, headers, rows, totals, colWidths, margin);
 

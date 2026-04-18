@@ -52,6 +52,8 @@ export function AdmissionForm() {
       indexNumber: indexNumber.trim(),
       phoneNumber: phoneNumber.trim(),
       meanGrade: meanGrade as Grade,
+      guardianName: guardianName.trim(),
+      guardianPhone: guardianPhone.trim(),
     };
     setResult(evaluateAdmission(data, course));
   }
@@ -63,6 +65,8 @@ export function AdmissionForm() {
       indexNumber: indexNumber.trim(),
       phoneNumber: phoneNumber.trim(),
       meanGrade: meanGrade as Grade,
+      guardianName: guardianName.trim(),
+      guardianPhone: guardianPhone.trim(),
     };
 
     // Log download to database
@@ -74,6 +78,8 @@ export function AdmissionForm() {
       faculty: result.faculty,
       category: result.category,
       mean_grade: data.meanGrade,
+      guardian_name: data.guardianName,
+      guardian_phone: data.guardianPhone,
     });
 
     await generateAdmissionLetter(data, result);
@@ -83,6 +89,8 @@ export function AdmissionForm() {
     setFullName("");
     setIndexNumber("");
     setPhoneNumber("");
+    setGuardianName("");
+    setGuardianPhone("");
     setMeanGrade("");
     setSelectedCourse("");
     setResult(null);

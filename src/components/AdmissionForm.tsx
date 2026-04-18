@@ -219,7 +219,7 @@ export function AdmissionForm() {
                       <SelectContent>
                         {Object.entries(coursesByFaculty).map(([faculty, courses]) => (
                           <div key={faculty}>
-                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">{faculty}</div>
+                            <div className="px-2 py-1.5 text-xs font-bold uppercase tracking-wide text-foreground">{faculty}</div>
                             {courses.map((c) => (
                               <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
                             ))}

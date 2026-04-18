@@ -21,6 +21,8 @@ export type Database = {
           downloaded_at: string
           faculty: string
           full_name: string
+          guardian_name: string | null
+          guardian_phone: string | null
           id: string
           index_number: string
           mean_grade: string
@@ -32,6 +34,8 @@ export type Database = {
           downloaded_at?: string
           faculty: string
           full_name: string
+          guardian_name?: string | null
+          guardian_phone?: string | null
           id?: string
           index_number: string
           mean_grade: string
@@ -43,6 +47,8 @@ export type Database = {
           downloaded_at?: string
           faculty?: string
           full_name?: string
+          guardian_name?: string | null
+          guardian_phone?: string | null
           id?: string
           index_number?: string
           mean_grade?: string

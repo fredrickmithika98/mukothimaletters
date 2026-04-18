@@ -7,6 +7,8 @@ export interface ApplicantData {
   indexNumber: string;
   phoneNumber: string;
   meanGrade: Grade;
+  guardianName?: string;
+  guardianPhone?: string;
 }
 
 export interface CourseInfo {

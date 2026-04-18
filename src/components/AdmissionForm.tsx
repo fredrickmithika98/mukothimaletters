@@ -14,6 +14,8 @@ export function AdmissionForm() {
   const [fullName, setFullName] = useState("");
   const [indexNumber, setIndexNumber] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [guardianName, setGuardianName] = useState("");
+  const [guardianPhone, setGuardianPhone] = useState("");
   const [meanGrade, setMeanGrade] = useState<Grade | "">("");
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [result, setResult] = useState<AdmissionResult | null>(null);
@@ -33,6 +35,8 @@ export function AdmissionForm() {
     if (!fullName.trim()) errs.fullName = "Full name is required";
     if (!indexNumber.trim()) errs.indexNumber = "Index number is required";
     if (!phoneNumber.trim()) errs.phoneNumber = "Phone number is required";
+    if (!guardianName.trim()) errs.guardianName = "Parent/Guardian name is required";
+    if (!guardianPhone.trim()) errs.guardianPhone = "Parent/Guardian phone is required";
     if (!meanGrade) errs.meanGrade = "Mean grade is required";
     if (!selectedCourse) errs.selectedCourse = "Please select a course";
     setErrors(errs);
@@ -48,6 +52,8 @@ export function AdmissionForm() {
       indexNumber: indexNumber.trim(),
       phoneNumber: phoneNumber.trim(),
       meanGrade: meanGrade as Grade,
+      guardianName: guardianName.trim(),
+      guardianPhone: guardianPhone.trim(),
     };
     setResult(evaluateAdmission(data, course));
   }
@@ -59,6 +65,8 @@ export function AdmissionForm() {
       indexNumber: indexNumber.trim(),
       phoneNumber: phoneNumber.trim(),
       meanGrade: meanGrade as Grade,
+      guardianName: guardianName.trim(),
+      guardianPhone: guardianPhone.trim(),
     };
 
     // Log download to database
@@ -70,6 +78,8 @@ export function AdmissionForm() {
       faculty: result.faculty,
       category: result.category,
       mean_grade: data.meanGrade,
+      guardian_name: data.guardianName,
+      guardian_phone: data.guardianPhone,
     });
 
     await generateAdmissionLetter(data, result);
@@ -79,6 +89,8 @@ export function AdmissionForm() {
     setFullName("");
     setIndexNumber("");
     setPhoneNumber("");
+    setGuardianName("");
+    setGuardianPhone("");
     setMeanGrade("");
     setSelectedCourse("");
     setResult(null);
@@ -147,6 +159,28 @@ export function AdmissionForm() {
                     onChange={(e) => setPhoneNumber(e.target.value)}
                   />
                   {errors.phoneNumber && <p className="text-sm text-destructive">{errors.phoneNumber}</p>}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guardianName">Parent / Guardian Name</Label>
+                  <Input
+                    id="guardianName"
+                    placeholder="E.G. JANE WANJIKU MWANGI"
+                    value={guardianName}
+                    onChange={(e) => setGuardianName(e.target.value.toUpperCase())}
+                  />
+                  {errors.guardianName && <p className="text-sm text-destructive">{errors.guardianName}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="guardianPhone">Parent / Guardian Phone</Label>
+                  <Input
+                    id="guardianPhone"
+                    placeholder="e.g. 0712345678"
+                    value={guardianPhone}
+                    onChange={(e) => setGuardianPhone(e.target.value)}
+                  />
+                  {errors.guardianPhone && <p className="text-sm text-destructive">{errors.guardianPhone}</p>}
                 </div>
               </div>
             </CardContent>

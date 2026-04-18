@@ -121,9 +121,9 @@ export function AdmissionForm() {
                 <Label htmlFor="fullName">Full Name</Label>
                 <Input
                   id="fullName"
-                  placeholder="e.g. John Kamau Mwangi"
+                  placeholder="E.G. JOHN KAMAU MWANGI"
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  onChange={(e) => setFullName(e.target.value.toUpperCase())}
                 />
                 {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
               </div>

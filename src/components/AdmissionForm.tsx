@@ -14,6 +14,8 @@ export function AdmissionForm() {
   const [fullName, setFullName] = useState("");
   const [indexNumber, setIndexNumber] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [guardianName, setGuardianName] = useState("");
+  const [guardianPhone, setGuardianPhone] = useState("");
   const [meanGrade, setMeanGrade] = useState<Grade | "">("");
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [result, setResult] = useState<AdmissionResult | null>(null);

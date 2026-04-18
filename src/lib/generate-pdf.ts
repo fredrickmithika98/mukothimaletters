@@ -185,18 +185,9 @@ y += 8; // space after line
   doc.setFont("times", "bold");
   doc.setFontSize(12);
   doc.text(`Name: ${applicant.fullName}`, margin, y);
-
-  if (applicant.guardianName || applicant.guardianPhone) {
-    y += 6;
-    doc.setFontSize(10);
-    if (applicant.guardianName) {
-      doc.text(`Parent/Guardian: ${applicant.guardianName}`, margin, y);
-      y += 5;
-    }
-    if (applicant.guardianPhone) {
-      doc.text(`Parent/Guardian Phone: ${applicant.guardianPhone}`, margin, y);
-    }
-  }
+  y += 6;
+  doc.setFontSize(10);
+  doc.text(`Index Number: ${applicant.indexNumber}`, margin, y);
 
   /* ================= BODY PARAGRAPH 1 ================= */
   y += 8;

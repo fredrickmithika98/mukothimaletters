@@ -161,6 +161,28 @@ export function AdmissionForm() {
                   {errors.phoneNumber && <p className="text-sm text-destructive">{errors.phoneNumber}</p>}
                 </div>
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="guardianName">Parent / Guardian Name</Label>
+                  <Input
+                    id="guardianName"
+                    placeholder="E.G. JANE WANJIKU MWANGI"
+                    value={guardianName}
+                    onChange={(e) => setGuardianName(e.target.value.toUpperCase())}
+                  />
+                  {errors.guardianName && <p className="text-sm text-destructive">{errors.guardianName}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="guardianPhone">Parent / Guardian Phone</Label>
+                  <Input
+                    id="guardianPhone"
+                    placeholder="e.g. 0712345678"
+                    value={guardianPhone}
+                    onChange={(e) => setGuardianPhone(e.target.value)}
+                  />
+                  {errors.guardianPhone && <p className="text-sm text-destructive">{errors.guardianPhone}</p>}
+                </div>
+              </div>
             </CardContent>
           </Card>
 

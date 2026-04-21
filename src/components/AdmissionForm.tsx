@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 const grades = getAllGrades();
 
@@ -20,6 +21,7 @@ export function AdmissionForm() {
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [result, setResult] = useState<AdmissionResult | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const eligibleCourses = meanGrade ? getEligibleCourses(meanGrade as Grade) : [];
   const category = eligibleCourses.length > 0 ? eligibleCourses[0].category : null;
@@ -83,6 +85,7 @@ export function AdmissionForm() {
     });
 
     await generateAdmissionLetter(data, result);
+    setShowSuccess(true);
   }
 
   function handleReset() {
@@ -310,6 +313,53 @@ export function AdmissionForm() {
           </Card>
         )}
       </div>
+
+      <Dialog open={showSuccess} onOpenChange={setShowSuccess}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto h-14 w-14 rounded-full bg-success/15 flex items-center justify-center mb-2">
+              <span className="text-3xl" role="img" aria-label="celebration">🎉</span>
+            </div>
+            <DialogTitle className="text-center text-xl">
+              Congratulations and Welcome to Mukothima Centre!
+            </DialogTitle>
+            <DialogDescription className="text-center pt-2 space-y-2">
+              <span className="block">Your provisional admission letter has been downloaded successfully.</span>
+              <span className="block">We are delighted to welcome you to Mukothima Centre to undertake the programme you selected.</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-2 space-y-3">
+            <p className="text-sm text-center text-muted-foreground">
+              For more clarification about admissions and the reporting date, please contact us:
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              <a
+                href="tel:+254720021155"
+                className="flex items-center justify-center gap-2 rounded-lg border border-border bg-card hover:bg-accent transition-colors px-4 py-3 text-sm font-medium text-foreground"
+              >
+                <span role="img" aria-label="phone">📞</span>
+                Call Admissions: +254 720 021155
+              </a>
+              <a
+                href="https://wa.me/254720021155"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-lg border border-success/40 bg-success/10 hover:bg-success/20 transition-colors px-4 py-3 text-sm font-medium text-foreground"
+              >
+                <span role="img" aria-label="chat">💬</span>
+                Chat on WhatsApp: +254 720 021155
+              </a>
+            </div>
+          </div>
+
+          <DialogFooter className="sm:justify-center">
+            <Button variant="outline" onClick={() => setShowSuccess(false)} className="w-full sm:w-auto">
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -119,6 +119,9 @@ const CERTIFICATE_COURSES: CourseInfo[] = [
   { name: "Certificate in Disaster Management", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
   { name: "Certificate in Leadership and Public Administration", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
   { name: "Certificate in National Cohesion, Values and Principles of Governance", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
+
+  // Faculty of Health Services (Certificate — Level 4)
+  { name: "Caregiving Level 4", faculty: FACULTY_NAMES.FHS, category: "Certificate" },
 ];
 
 export function getEligibleCourses(meanGrade: Grade): CourseInfo[] {

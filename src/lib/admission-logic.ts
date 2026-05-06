@@ -39,6 +39,7 @@ const FACULTY_NAMES = {
   SNHS: "School of Nursing and Health Sciences",
   FPSET: "Faculty of Physical Sciences, Engineering & Technology",
   FHSS: "Faculty of Humanities and Social Sciences",
+  FHS: "Faculty of Health Services",
 } as const;
 
 // Diploma courses (mean grade C or C-)

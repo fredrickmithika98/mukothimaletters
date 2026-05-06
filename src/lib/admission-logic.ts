@@ -80,12 +80,12 @@ const DIPLOMA_COURSES: CourseInfo[] = [
   { name: "Diploma in Counselling Psychology", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
 
   // Faculty of Health Services (Diploma — Level 5 & 6)
-  { name: "Perioperative Theatre Technology Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
-  { name: "Perioperative Theatre Technology Level 6", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
-  { name: "Healthcare Support Services Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
-  { name: "Mortuary Science Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
-  { name: "Community Health Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
-  { name: "Community Health Level 6", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Diploma in Perioperative Theatre Technology Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Diploma in Perioperative Theatre Technology Level 6", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Diploma in Healthcare Support Services Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Diploma in Mortuary Science Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Diploma in Community Health Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Diploma in Community Health Level 6", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
 ];
 
 // Certificate courses (mean grade D+ or D)
@@ -121,7 +121,7 @@ const CERTIFICATE_COURSES: CourseInfo[] = [
   { name: "Certificate in National Cohesion, Values and Principles of Governance", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
 
   // Faculty of Health Services (Certificate — Level 4)
-  { name: "Caregiving Level 4", faculty: FACULTY_NAMES.FHS, category: "Certificate" },
+  { name: "Certificate in Caregiving Level 4", faculty: FACULTY_NAMES.FHS, category: "Certificate" },
 ];
 
 export function getEligibleCourses(meanGrade: Grade): CourseInfo[] {

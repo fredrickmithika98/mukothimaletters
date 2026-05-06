@@ -39,6 +39,7 @@ const FACULTY_NAMES = {
   SNHS: "School of Nursing and Health Sciences",
   FPSET: "Faculty of Physical Sciences, Engineering & Technology",
   FHSS: "Faculty of Humanities and Social Sciences",
+  FHS: "Faculty of Health Services",
 } as const;
 
 // Diploma courses (mean grade C or C-)
@@ -77,6 +78,14 @@ const DIPLOMA_COURSES: CourseInfo[] = [
   { name: "Diploma in Information Science", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
   { name: "Diploma in Journalism & Mass Communication", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
   { name: "Diploma in Counselling Psychology", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
+
+  // Faculty of Health Services (Diploma — Level 5 & 6)
+  { name: "Perioperative Theatre Technology Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Perioperative Theatre Technology Level 6", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Healthcare Support Services Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Mortuary Science Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Community Health Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Community Health Level 6", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
 ];
 
 // Certificate courses (mean grade D+ or D)
@@ -110,6 +119,9 @@ const CERTIFICATE_COURSES: CourseInfo[] = [
   { name: "Certificate in Disaster Management", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
   { name: "Certificate in Leadership and Public Administration", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
   { name: "Certificate in National Cohesion, Values and Principles of Governance", faculty: FACULTY_NAMES.FHSS, category: "Certificate" },
+
+  // Faculty of Health Services (Certificate — Level 4)
+  { name: "Caregiving Level 4", faculty: FACULTY_NAMES.FHS, category: "Certificate" },
 ];
 
 export function getEligibleCourses(meanGrade: Grade): CourseInfo[] {

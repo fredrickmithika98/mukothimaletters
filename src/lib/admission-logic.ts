@@ -78,6 +78,14 @@ const DIPLOMA_COURSES: CourseInfo[] = [
   { name: "Diploma in Information Science", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
   { name: "Diploma in Journalism & Mass Communication", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
   { name: "Diploma in Counselling Psychology", faculty: FACULTY_NAMES.FHSS, category: "Diploma" },
+
+  // Faculty of Health Services (Diploma — Level 5 & 6)
+  { name: "Perioperative Theatre Technology Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Perioperative Theatre Technology Level 6", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Healthcare Support Services Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Mortuary Science Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Community Health Level 5", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
+  { name: "Community Health Level 6", faculty: FACULTY_NAMES.FHS, category: "Diploma" },
 ];
 
 // Certificate courses (mean grade D+ or D)

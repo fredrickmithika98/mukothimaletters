@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
@@ -239,12 +239,22 @@ function AdminDashboard() {
       "Mean Grade": d.mean_grade,
       "Downloaded At": new Date(d.downloaded_at).toLocaleString(),
     }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Downloads");
+    const headers = ["#", "Full Name", "Index Number", "Phone Number", "Guardian Name", "Guardian Phone", "Course", "Faculty", "Category", "Mean Grade", "Downloaded At"];
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("Downloads");
+    ws.addRow(headers);
+    rows.forEach((r) => ws.addRow(headers.map((h) => (r as any)[h])));
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
     const ts = new Date().toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `admission_downloads_${ts}.xlsx`);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `admission_downloads_${ts}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
+
 
   const filteredDownloads = downloads.filter(
     (d) =>

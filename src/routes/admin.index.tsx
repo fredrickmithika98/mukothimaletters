@@ -219,7 +219,14 @@ function AdminDashboard() {
       alert("No download records to export.");
       return;
     }
-    const rows = data.map((d, i) => ({
+    const seen = new Set<string>();
+    const deduped = data.filter((d) => {
+      const key = `${d.index_number.trim().toLowerCase()}|${d.category}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    const rows = deduped.map((d, i) => ({
       "#": i + 1,
       "Full Name": d.full_name,
       "Index Number": d.index_number,

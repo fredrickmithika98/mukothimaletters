@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import * as XLSX from "xlsx";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,

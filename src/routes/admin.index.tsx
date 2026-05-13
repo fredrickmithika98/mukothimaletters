@@ -198,6 +198,35 @@ function AdminDashboard() {
     await fetchCourses();
   }
 
+  async function handleExportExcel() {
+    const { data } = await supabase
+      .from("admission_downloads")
+      .select("*")
+      .order("downloaded_at", { ascending: false });
+    if (!data || data.length === 0) {
+      alert("No download records to export.");
+      return;
+    }
+    const rows = data.map((d, i) => ({
+      "#": i + 1,
+      "Full Name": d.full_name,
+      "Index Number": d.index_number,
+      "Phone Number": d.phone_number,
+      "Guardian Name": (d as any).guardian_name ?? "",
+      "Guardian Phone": (d as any).guardian_phone ?? "",
+      "Course": d.course_name,
+      "Faculty": d.faculty,
+      "Category": d.category,
+      "Mean Grade": d.mean_grade,
+      "Downloaded At": new Date(d.downloaded_at).toLocaleString(),
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Downloads");
+    const ts = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `admission_downloads_${ts}.xlsx`);
+  }
+
   const filteredDownloads = downloads.filter(
     (d) =>
       d.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||

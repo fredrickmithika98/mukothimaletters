@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import * as XLSX from "xlsx";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
@@ -197,6 +198,35 @@ function AdminDashboard() {
     await fetchCourses();
   }
 
+  async function handleExportExcel() {
+    const { data } = await supabase
+      .from("admission_downloads")
+      .select("*")
+      .order("downloaded_at", { ascending: false });
+    if (!data || data.length === 0) {
+      alert("No download records to export.");
+      return;
+    }
+    const rows = data.map((d, i) => ({
+      "#": i + 1,
+      "Full Name": d.full_name,
+      "Index Number": d.index_number,
+      "Phone Number": d.phone_number,
+      "Guardian Name": (d as any).guardian_name ?? "",
+      "Guardian Phone": (d as any).guardian_phone ?? "",
+      "Course": d.course_name,
+      "Faculty": d.faculty,
+      "Category": d.category,
+      "Mean Grade": d.mean_grade,
+      "Downloaded At": new Date(d.downloaded_at).toLocaleString(),
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Downloads");
+    const ts = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `admission_downloads_${ts}.xlsx`);
+  }
+
   const filteredDownloads = downloads.filter(
     (d) =>
       d.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -299,14 +329,19 @@ function AdminDashboard() {
         {/* Downloads Tab */}
         {activeTab === "downloads" && (
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
               <CardTitle>Downloaded Admission Letters</CardTitle>
-              <Input
-                placeholder="Search by name, index, phone..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-xs"
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Search by name, index, phone..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="max-w-xs"
+                />
+                <Button size="sm" onClick={handleExportExcel}>
+                  ⬇ Export to Excel
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {filteredDownloads.length === 0 ? (

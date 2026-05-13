@@ -253,6 +253,8 @@ function AdminDashboard() {
     a.download = `admission_downloads_${ts}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
 
   const filteredDownloads = downloads.filter(
     (d) =>

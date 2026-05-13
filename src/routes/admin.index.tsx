@@ -106,7 +106,19 @@ function AdminDashboard() {
       .from("admission_downloads")
       .select("*")
       .order("downloaded_at", { ascending: false });
-    if (data) setDownloads(data);
+    if (data) {
+      // Dedupe: keep only the latest download per (index_number + category).
+      // Same person downloading a different category is still kept.
+      const seen = new Set<string>();
+      const unique: Download[] = [];
+      for (const d of data) {
+        const key = `${d.index_number.trim().toLowerCase()}|${d.category}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        unique.push(d);
+      }
+      setDownloads(unique);
+    }
   }
 
   async function fetchCourses() {
@@ -207,7 +219,14 @@ function AdminDashboard() {
       alert("No download records to export.");
       return;
     }
-    const rows = data.map((d, i) => ({
+    const seen = new Set<string>();
+    const deduped = data.filter((d) => {
+      const key = `${d.index_number.trim().toLowerCase()}|${d.category}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    const rows = deduped.map((d, i) => ({
       "#": i + 1,
       "Full Name": d.full_name,
       "Index Number": d.index_number,

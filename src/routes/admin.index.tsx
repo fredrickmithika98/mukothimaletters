@@ -329,14 +329,19 @@ function AdminDashboard() {
         {/* Downloads Tab */}
         {activeTab === "downloads" && (
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
               <CardTitle>Downloaded Admission Letters</CardTitle>
-              <Input
-                placeholder="Search by name, index, phone..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-xs"
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Search by name, index, phone..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="max-w-xs"
+                />
+                <Button size="sm" onClick={handleExportExcel}>
+                  ⬇ Export to Excel
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {filteredDownloads.length === 0 ? (

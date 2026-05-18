@@ -117,7 +117,7 @@ export function AdmissionForm() {
           <span className="text-sm font-medium text-primary">Mukothima Centre</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
-          Admission Letter Generator
+          Mukothima Admission Letter Portal
         </h1>
         <p className="mt-3 text-muted-foreground max-w-lg mx-auto">
           Enter your details below to check eligibility and generate your official admission letter.

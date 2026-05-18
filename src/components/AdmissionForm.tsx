@@ -120,7 +120,7 @@ export function AdmissionForm() {
           Mukothima Admission Letter Portal
         </h1>
         <p className="mt-3 text-muted-foreground max-w-lg mx-auto">
-          Enter your details below to check eligibility and generate your official admission letter.
+          Enter your details below to check eligibility and generate your official provisional admission letter.
         </p>
       </div>
 

@@ -10,12 +10,56 @@ interface FeeRow {
 
 type Templates = Record<string, string>;
 
+export interface SemesterFeeItem { name: string; amount: number }
+export interface SemesterFee { label: string; items: SemesterFeeItem[] }
+
+interface CourseFeesConfig {
+  duration_semesters: number | null;
+  semester_fees: SemesterFee[] | null;
+}
+
 /* ================= FETCH TEMPLATE ================= */
 async function fetchTemplates(): Promise<Templates> {
   const { data } = await supabase.from("letter_templates").select("template_key, content");
   const map: Templates = {};
   if (data) data.forEach((t) => (map[t.template_key] = t.content));
   return map;
+}
+
+async function fetchCourseFees(name: string, category: string): Promise<CourseFeesConfig | null> {
+  const { data } = await supabase
+    .from("courses")
+    .select("duration_semesters, semester_fees")
+    .eq("name", name)
+    .eq("category", category)
+    .maybeSingle();
+  if (!data) return null;
+  const raw = (data as any).semester_fees;
+  let semester_fees: SemesterFee[] | null = null;
+  if (Array.isArray(raw) && raw.length > 0) {
+    semester_fees = raw
+      .map((s: any) => ({
+        label: String(s?.label ?? ""),
+        items: Array.isArray(s?.items)
+          ? s.items.map((it: any) => ({ name: String(it?.name ?? ""), amount: Number(it?.amount) || 0 }))
+          : [],
+      }))
+      .filter((s) => s.label && s.items.length > 0);
+    if (semester_fees.length === 0) semester_fees = null;
+  }
+  return {
+    duration_semesters: (data as any).duration_semesters ?? null,
+    semester_fees,
+  };
+}
+
+function fmtAmount(n: number): string {
+  return n.toLocaleString("en-KE");
+}
+
+function semestersInWords(n: number): string {
+  const map: Record<number, string> = { 1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight" };
+  return `${map[n] ?? n} semester${n === 1 ? "" : "s"}`;
 }
 
 function t(templates: Templates, key: string, fallback: string): string {

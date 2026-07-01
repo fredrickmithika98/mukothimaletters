@@ -158,6 +158,7 @@ export async function generateAdmissionLetter(
   result: AdmissionResult
 ): Promise<void> {
   const tpl = await fetchTemplates();
+  const courseFees = await fetchCourseFees(result.courseName, result.category);
   const doc = new jsPDF();
 
   const pageWidth = doc.internal.pageSize.getWidth();

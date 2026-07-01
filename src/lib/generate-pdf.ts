@@ -297,8 +297,45 @@ y += admissionLines.length * lineHeight + 3;
   y += lineHeight + 4;
 
 /* ================= FEE TABLE ================= */
-if (isDiploma) {
-  // ===== DIPLOMA (REGULAR ONLY) =====
+if (courseFees?.semester_fees && courseFees.semester_fees.length > 0) {
+  // ===== CUSTOM PER-SEMESTER FEES (from admin) =====
+  const sems = courseFees.semester_fees;
+  const labels = sems.map((s) => s.label);
+
+  // Build unique item list preserving order of first appearance
+  const itemOrder: string[] = [];
+  const seen = new Set<string>();
+  for (const s of sems) {
+    for (const it of s.items) {
+      if (!seen.has(it.name)) { seen.add(it.name); itemOrder.push(it.name); }
+    }
+  }
+
+  const rows: FeeRow[] = itemOrder.map((name, i) => ({
+    sn: String(i + 1),
+    item: name,
+    values: sems.map((s) => {
+      const found = s.items.find((it) => it.name === name);
+      return found ? fmtAmount(found.amount) : "";
+    }),
+  }));
+
+  const semTotals = sems.map((s) => s.items.reduce((sum, it) => sum + (it.amount || 0), 0));
+  const totals = [["", "TOTAL", ...semTotals.map(fmtAmount)]];
+
+  const headers = [["S/N", "ITEM", ...labels]];
+
+  // Compute column widths that fit contentWidth
+  const snW = 10;
+  const itemW = 70;
+  const remaining = contentWidth - snW - itemW;
+  const semW = Math.max(18, Math.floor(remaining / sems.length));
+  const colWidths = [snW, itemW, ...sems.map(() => semW)];
+
+  y = drawTable(doc, y, headers, rows, totals, colWidths, margin);
+
+} else if (isDiploma) {
+  // ===== DIPLOMA (REGULAR ONLY) — default =====
   const headers = [
     ["S/N", "ITEM", "Y1S1", "Y1S2"],
   ];
@@ -324,7 +361,7 @@ if (isDiploma) {
   y = drawTable(doc, y, headers, rows, totals, colWidths, margin);
 
 } else {
-  // ===== CERTIFICATE (REGULAR ONLY) =====
+  // ===== CERTIFICATE (REGULAR ONLY) — default =====
   const headers = [
     ["S/N", "ITEM", "Y1S1", "Y1S2"],
   ];

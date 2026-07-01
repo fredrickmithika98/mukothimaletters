@@ -40,12 +40,17 @@ interface Download {
   downloaded_at: string;
 }
 
+interface FeeItem { name: string; amount: number }
+interface SemesterFee { label: string; items: FeeItem[] }
+
 interface Course {
   id: string;
   name: string;
   faculty: string;
   category: string;
   is_active: boolean;
+  duration_semesters?: number | null;
+  semester_fees?: SemesterFee[] | null;
 }
 
 interface LetterTemplate {

@@ -174,6 +174,8 @@ function AdminDashboard() {
     setCourseName("");
     setCourseFaculty("");
     setCourseCategory("Diploma");
+    setCourseDuration("");
+    setSemesterFees([]);
     setCourseDialogOpen(true);
   }
 
@@ -182,21 +184,72 @@ function AdminDashboard() {
     setCourseName(course.name);
     setCourseFaculty(course.faculty);
     setCourseCategory(course.category as "Diploma" | "Certificate");
+    setCourseDuration(course.duration_semesters ? String(course.duration_semesters) : "");
+    setSemesterFees(Array.isArray(course.semester_fees) ? course.semester_fees : []);
     setCourseDialogOpen(true);
+  }
+
+  function addSemester() {
+    setSemesterFees((prev) => [
+      ...prev,
+      { label: `S${prev.length + 1}`, items: [{ name: "Tuition fee", amount: 0 }] },
+    ]);
+  }
+  function removeSemester(i: number) {
+    setSemesterFees((prev) => prev.filter((_, idx) => idx !== i));
+  }
+  function updateSemesterLabel(i: number, label: string) {
+    setSemesterFees((prev) => prev.map((s, idx) => (idx === i ? { ...s, label } : s)));
+  }
+  function addFeeItem(si: number) {
+    setSemesterFees((prev) =>
+      prev.map((s, idx) => (idx === si ? { ...s, items: [...s.items, { name: "", amount: 0 }] } : s))
+    );
+  }
+  function updateFeeItem(si: number, ii: number, patch: Partial<FeeItem>) {
+    setSemesterFees((prev) =>
+      prev.map((s, idx) =>
+        idx === si
+          ? { ...s, items: s.items.map((it, j) => (j === ii ? { ...it, ...patch } : it)) }
+          : s
+      )
+    );
+  }
+  function removeFeeItem(si: number, ii: number) {
+    setSemesterFees((prev) =>
+      prev.map((s, idx) => (idx === si ? { ...s, items: s.items.filter((_, j) => j !== ii) } : s))
+    );
+  }
+  function semesterTotal(s: SemesterFee) {
+    return s.items.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
   }
 
   async function handleSaveCourse() {
     if (!courseName.trim() || !courseFaculty.trim()) return;
 
+    const cleanFees: SemesterFee[] = semesterFees
+      .map((s) => ({
+        label: s.label.trim(),
+        items: s.items
+          .filter((it) => it.name.trim())
+          .map((it) => ({ name: it.name.trim(), amount: Number(it.amount) || 0 })),
+      }))
+      .filter((s) => s.label && s.items.length > 0);
+
+    const durationNum = courseDuration ? Number(courseDuration) : null;
+
+    const payload: any = {
+      name: courseName.trim(),
+      faculty: courseFaculty.trim(),
+      category: courseCategory,
+      duration_semesters: durationNum && durationNum > 0 ? durationNum : (cleanFees.length || null),
+      semester_fees: cleanFees.length > 0 ? cleanFees : null,
+    };
+
     if (editingCourse) {
-      await supabase
-        .from("courses")
-        .update({ name: courseName.trim(), faculty: courseFaculty.trim(), category: courseCategory })
-        .eq("id", editingCourse.id);
+      await supabase.from("courses").update(payload).eq("id", editingCourse.id);
     } else {
-      await supabase
-        .from("courses")
-        .insert({ name: courseName.trim(), faculty: courseFaculty.trim(), category: courseCategory });
+      await supabase.from("courses").insert(payload);
     }
 
     setCourseDialogOpen(false);

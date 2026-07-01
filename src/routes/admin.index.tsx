@@ -132,7 +132,7 @@ function AdminDashboard() {
       .select("*")
       .order("category", { ascending: true })
       .order("name", { ascending: true });
-    if (data) setCourses(data);
+    if (data) setCourses(data as unknown as Course[]);
   }
 
   async function fetchTemplates() {

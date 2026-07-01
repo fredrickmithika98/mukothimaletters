@@ -60,28 +60,34 @@ export type Database = {
         Row: {
           category: string
           created_at: string
+          duration_semesters: number | null
           faculty: string
           id: string
           is_active: boolean
           name: string
+          semester_fees: Json | null
           updated_at: string
         }
         Insert: {
           category: string
           created_at?: string
+          duration_semesters?: number | null
           faculty: string
           id?: string
           is_active?: boolean
           name: string
+          semester_fees?: Json | null
           updated_at?: string
         }
         Update: {
           category?: string
           created_at?: string
+          duration_semesters?: number | null
           faculty?: string
           id?: string
           is_active?: boolean
           name?: string
+          semester_fees?: Json | null
           updated_at?: string
         }
         Relationships: []

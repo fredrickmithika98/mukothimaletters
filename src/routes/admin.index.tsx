@@ -40,12 +40,17 @@ interface Download {
   downloaded_at: string;
 }
 
+interface FeeItem { name: string; amount: number }
+interface SemesterFee { label: string; items: FeeItem[] }
+
 interface Course {
   id: string;
   name: string;
   faculty: string;
   category: string;
   is_active: boolean;
+  duration_semesters?: number | null;
+  semester_fees?: SemesterFee[] | null;
 }
 
 interface LetterTemplate {
@@ -72,6 +77,8 @@ function AdminDashboard() {
   const [courseName, setCourseName] = useState("");
   const [courseFaculty, setCourseFaculty] = useState("");
   const [courseCategory, setCourseCategory] = useState<"Diploma" | "Certificate">("Diploma");
+  const [courseDuration, setCourseDuration] = useState<string>("");
+  const [semesterFees, setSemesterFees] = useState<SemesterFee[]>([]);
 
   useEffect(() => {
     checkAuth();
@@ -127,7 +134,7 @@ function AdminDashboard() {
       .select("*")
       .order("category", { ascending: true })
       .order("name", { ascending: true });
-    if (data) setCourses(data);
+    if (data) setCourses(data as unknown as Course[]);
   }
 
   async function fetchTemplates() {
@@ -167,6 +174,8 @@ function AdminDashboard() {
     setCourseName("");
     setCourseFaculty("");
     setCourseCategory("Diploma");
+    setCourseDuration("");
+    setSemesterFees([]);
     setCourseDialogOpen(true);
   }
 
@@ -175,21 +184,72 @@ function AdminDashboard() {
     setCourseName(course.name);
     setCourseFaculty(course.faculty);
     setCourseCategory(course.category as "Diploma" | "Certificate");
+    setCourseDuration(course.duration_semesters ? String(course.duration_semesters) : "");
+    setSemesterFees(Array.isArray(course.semester_fees) ? course.semester_fees : []);
     setCourseDialogOpen(true);
+  }
+
+  function addSemester() {
+    setSemesterFees((prev) => [
+      ...prev,
+      { label: `S${prev.length + 1}`, items: [{ name: "Tuition fee", amount: 0 }] },
+    ]);
+  }
+  function removeSemester(i: number) {
+    setSemesterFees((prev) => prev.filter((_, idx) => idx !== i));
+  }
+  function updateSemesterLabel(i: number, label: string) {
+    setSemesterFees((prev) => prev.map((s, idx) => (idx === i ? { ...s, label } : s)));
+  }
+  function addFeeItem(si: number) {
+    setSemesterFees((prev) =>
+      prev.map((s, idx) => (idx === si ? { ...s, items: [...s.items, { name: "", amount: 0 }] } : s))
+    );
+  }
+  function updateFeeItem(si: number, ii: number, patch: Partial<FeeItem>) {
+    setSemesterFees((prev) =>
+      prev.map((s, idx) =>
+        idx === si
+          ? { ...s, items: s.items.map((it, j) => (j === ii ? { ...it, ...patch } : it)) }
+          : s
+      )
+    );
+  }
+  function removeFeeItem(si: number, ii: number) {
+    setSemesterFees((prev) =>
+      prev.map((s, idx) => (idx === si ? { ...s, items: s.items.filter((_, j) => j !== ii) } : s))
+    );
+  }
+  function semesterTotal(s: SemesterFee) {
+    return s.items.reduce((sum, it) => sum + (Number(it.amount) || 0), 0);
   }
 
   async function handleSaveCourse() {
     if (!courseName.trim() || !courseFaculty.trim()) return;
 
+    const cleanFees: SemesterFee[] = semesterFees
+      .map((s) => ({
+        label: s.label.trim(),
+        items: s.items
+          .filter((it) => it.name.trim())
+          .map((it) => ({ name: it.name.trim(), amount: Number(it.amount) || 0 })),
+      }))
+      .filter((s) => s.label && s.items.length > 0);
+
+    const durationNum = courseDuration ? Number(courseDuration) : null;
+
+    const payload: any = {
+      name: courseName.trim(),
+      faculty: courseFaculty.trim(),
+      category: courseCategory,
+      duration_semesters: durationNum && durationNum > 0 ? durationNum : (cleanFees.length || null),
+      semester_fees: cleanFees.length > 0 ? cleanFees : null,
+    };
+
     if (editingCourse) {
-      await supabase
-        .from("courses")
-        .update({ name: courseName.trim(), faculty: courseFaculty.trim(), category: courseCategory })
-        .eq("id", editingCourse.id);
+      await supabase.from("courses").update(payload).eq("id", editingCourse.id);
     } else {
-      await supabase
-        .from("courses")
-        .insert({ name: courseName.trim(), faculty: courseFaculty.trim(), category: courseCategory });
+      await supabase.from("courses").insert(payload);
     }
 
     setCourseDialogOpen(false);
@@ -432,7 +492,7 @@ function AdminDashboard() {
                 <DialogTrigger asChild>
                   <Button size="sm" onClick={openAddCourse}>+ Add Course</Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>{editingCourse ? "Edit Course" : "Add New Course"}</DialogTitle>
                   </DialogHeader>
@@ -453,18 +513,98 @@ function AdminDashboard() {
                         onChange={(e) => setCourseFaculty(e.target.value)}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Category</Label>
-                      <Select value={courseCategory} onValueChange={(v) => setCourseCategory(v as "Diploma" | "Certificate")}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Diploma">Diploma</SelectItem>
-                          <SelectItem value="Certificate">Certificate</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Category</Label>
+                        <Select value={courseCategory} onValueChange={(v) => setCourseCategory(v as "Diploma" | "Certificate")}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Diploma">Diploma</SelectItem>
+                            <SelectItem value="Certificate">Certificate</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Duration (semesters)</Label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={12}
+                          placeholder="e.g. 3"
+                          value={courseDuration}
+                          onChange={(e) => setCourseDuration(e.target.value)}
+                        />
+                      </div>
                     </div>
+
+                    {/* Per-semester fees editor */}
+                    <div className="space-y-3 pt-2 border-t">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label className="text-base">Per-Semester Fees</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Optional. If provided, the admission letter will use these fees. Otherwise the default {courseCategory} fee table is used.
+                          </p>
+                        </div>
+                        <Button type="button" size="sm" variant="outline" onClick={addSemester}>
+                          + Add Semester
+                        </Button>
+                      </div>
+
+                      {semesterFees.length === 0 && (
+                        <p className="text-xs text-muted-foreground italic">
+                          No custom fees. Click "Add Semester" to define fees (e.g. Y1S1, Y1S2, Y1S3).
+                        </p>
+                      )}
+
+                      {semesterFees.map((sem, si) => (
+                        <div key={si} className="rounded-lg border p-3 space-y-2 bg-muted/30">
+                          <div className="flex items-center gap-2">
+                            <Input
+                              className="max-w-[140px] font-semibold"
+                              placeholder="Y1S1"
+                              value={sem.label}
+                              onChange={(e) => updateSemesterLabel(si, e.target.value)}
+                            />
+                            <span className="text-xs text-muted-foreground ml-auto">
+                              Total: <b>KSh {semesterTotal(sem).toLocaleString()}</b>
+                            </span>
+                            <Button type="button" size="sm" variant="ghost" onClick={() => removeSemester(si)}>
+                              ✕
+                            </Button>
+                          </div>
+                          <div className="space-y-1.5">
+                            {sem.items.map((it, ii) => (
+                              <div key={ii} className="flex gap-2">
+                                <Input
+                                  className="flex-1"
+                                  placeholder="Fee item (e.g. Tuition fee)"
+                                  value={it.name}
+                                  onChange={(e) => updateFeeItem(si, ii, { name: e.target.value })}
+                                />
+                                <Input
+                                  className="max-w-[130px]"
+                                  type="number"
+                                  min={0}
+                                  placeholder="Amount"
+                                  value={it.amount || ""}
+                                  onChange={(e) => updateFeeItem(si, ii, { amount: Number(e.target.value) })}
+                                />
+                                <Button type="button" size="sm" variant="ghost" onClick={() => removeFeeItem(si, ii)}>
+                                  ✕
+                                </Button>
+                              </div>
+                            ))}
+                            <Button type="button" size="sm" variant="outline" onClick={() => addFeeItem(si)}>
+                              + Add Fee Item
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
                     <Button onClick={handleSaveCourse} className="w-full">
                       {editingCourse ? "Update Course" : "Add Course"}
                     </Button>

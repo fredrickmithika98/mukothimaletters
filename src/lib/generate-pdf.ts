@@ -10,12 +10,56 @@ interface FeeRow {
 
 type Templates = Record<string, string>;
 
+export interface SemesterFeeItem { name: string; amount: number }
+export interface SemesterFee { label: string; items: SemesterFeeItem[] }
+
+interface CourseFeesConfig {
+  duration_semesters: number | null;
+  semester_fees: SemesterFee[] | null;
+}
+
 /* ================= FETCH TEMPLATE ================= */
 async function fetchTemplates(): Promise<Templates> {
   const { data } = await supabase.from("letter_templates").select("template_key, content");
   const map: Templates = {};
   if (data) data.forEach((t) => (map[t.template_key] = t.content));
   return map;
+}
+
+async function fetchCourseFees(name: string, category: string): Promise<CourseFeesConfig | null> {
+  const { data } = await supabase
+    .from("courses")
+    .select("duration_semesters, semester_fees")
+    .eq("name", name)
+    .eq("category", category)
+    .maybeSingle();
+  if (!data) return null;
+  const raw = (data as any).semester_fees;
+  let semester_fees: SemesterFee[] | null = null;
+  if (Array.isArray(raw) && raw.length > 0) {
+    semester_fees = raw
+      .map((s: any) => ({
+        label: String(s?.label ?? ""),
+        items: Array.isArray(s?.items)
+          ? s.items.map((it: any) => ({ name: String(it?.name ?? ""), amount: Number(it?.amount) || 0 }))
+          : [],
+      }))
+      .filter((s) => s.label && s.items.length > 0);
+    if (semester_fees.length === 0) semester_fees = null;
+  }
+  return {
+    duration_semesters: (data as any).duration_semesters ?? null,
+    semester_fees,
+  };
+}
+
+function fmtAmount(n: number): string {
+  return n.toLocaleString("en-KE");
+}
+
+function semestersInWords(n: number): string {
+  const map: Record<number, string> = { 1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight" };
+  return `${map[n] ?? n} semester${n === 1 ? "" : "s"}`;
 }
 
 function t(templates: Templates, key: string, fallback: string): string {
@@ -114,6 +158,7 @@ export async function generateAdmissionLetter(
   result: AdmissionResult
 ): Promise<void> {
   const tpl = await fetchTemplates();
+  const courseFees = await fetchCourseFees(result.courseName, result.category);
   const doc = new jsPDF();
 
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -216,7 +261,10 @@ doc.text(admissionLines, margin, y);
 y += admissionLines.length * lineHeight + 3;
 
   // Second body paragraph
-  const semestersText = isDiploma ? "four semesters" : "two semesters";
+  const semCount =
+    courseFees?.duration_semesters ??
+    (courseFees?.semester_fees?.length ?? (isDiploma ? 4 : 2));
+  const semestersText = semestersInWords(semCount);
   const bodyP2 = `The program is designed to take ${semestersText}. All new students will be required to report to the University for registration and commencement of first semester studies of 2026/2027 academic year on Monday 24/08/2026.`;
   const p2Lines = doc.splitTextToSize(bodyP2, contentWidth);
   doc.text(p2Lines, margin, y);
@@ -249,8 +297,45 @@ y += admissionLines.length * lineHeight + 3;
   y += lineHeight + 4;
 
 /* ================= FEE TABLE ================= */
-if (isDiploma) {
-  // ===== DIPLOMA (REGULAR ONLY) =====
+if (courseFees?.semester_fees && courseFees.semester_fees.length > 0) {
+  // ===== CUSTOM PER-SEMESTER FEES (from admin) =====
+  const sems = courseFees.semester_fees;
+  const labels = sems.map((s) => s.label);
+
+  // Build unique item list preserving order of first appearance
+  const itemOrder: string[] = [];
+  const seen = new Set<string>();
+  for (const s of sems) {
+    for (const it of s.items) {
+      if (!seen.has(it.name)) { seen.add(it.name); itemOrder.push(it.name); }
+    }
+  }
+
+  const rows: FeeRow[] = itemOrder.map((name, i) => ({
+    sn: String(i + 1),
+    item: name,
+    values: sems.map((s) => {
+      const found = s.items.find((it) => it.name === name);
+      return found ? fmtAmount(found.amount) : "";
+    }),
+  }));
+
+  const semTotals = sems.map((s) => s.items.reduce((sum, it) => sum + (it.amount || 0), 0));
+  const totals = [["", "TOTAL", ...semTotals.map(fmtAmount)]];
+
+  const headers = [["S/N", "ITEM", ...labels]];
+
+  // Compute column widths that fit contentWidth
+  const snW = 10;
+  const itemW = 70;
+  const remaining = contentWidth - snW - itemW;
+  const semW = Math.max(18, Math.floor(remaining / sems.length));
+  const colWidths = [snW, itemW, ...sems.map(() => semW)];
+
+  y = drawTable(doc, y, headers, rows, totals, colWidths, margin);
+
+} else if (isDiploma) {
+  // ===== DIPLOMA (REGULAR ONLY) — default =====
   const headers = [
     ["S/N", "ITEM", "Y1S1", "Y1S2"],
   ];
@@ -276,7 +361,7 @@ if (isDiploma) {
   y = drawTable(doc, y, headers, rows, totals, colWidths, margin);
 
 } else {
-  // ===== CERTIFICATE (REGULAR ONLY) =====
+  // ===== CERTIFICATE (REGULAR ONLY) — default =====
   const headers = [
     ["S/N", "ITEM", "Y1S1", "Y1S2"],
   ];

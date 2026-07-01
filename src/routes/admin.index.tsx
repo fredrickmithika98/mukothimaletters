@@ -77,6 +77,8 @@ function AdminDashboard() {
   const [courseName, setCourseName] = useState("");
   const [courseFaculty, setCourseFaculty] = useState("");
   const [courseCategory, setCourseCategory] = useState<"Diploma" | "Certificate">("Diploma");
+  const [courseDuration, setCourseDuration] = useState<string>("");
+  const [semesterFees, setSemesterFees] = useState<SemesterFee[]>([]);
 
   useEffect(() => {
     checkAuth();

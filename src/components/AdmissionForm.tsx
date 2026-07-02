@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type Grade, type CourseInfo, type ApplicantData, type AdmissionResult, getAllGrades, getEligibleCourses, evaluateAdmission } from "@/lib/admission-logic";
+import { type Grade, type CourseInfo, type ApplicantData, type AdmissionResult, type ProgrammeType, getAllGrades, getEligibleCourses, getTvetCourses, evaluateAdmission } from "@/lib/admission-logic";
 import { generateAdmissionLetter } from "@/lib/generate-pdf";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 const grades = getAllGrades();
 
 export function AdmissionForm() {
+  const [programmeType, setProgrammeType] = useState<ProgrammeType>("University");
   const [fullName, setFullName] = useState("");
   const [indexNumber, setIndexNumber] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -23,8 +24,11 @@ export function AdmissionForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const eligibleCourses = meanGrade ? getEligibleCourses(meanGrade as Grade) : [];
-  const category = eligibleCourses.length > 0 ? eligibleCourses[0].category : null;
+  const isTvet = programmeType === "TVET";
+  const eligibleCourses: CourseInfo[] = isTvet
+    ? getTvetCourses()
+    : (meanGrade ? getEligibleCourses(meanGrade as Grade) : []);
+  const category = isTvet ? "TVET" : (eligibleCourses.length > 0 ? eligibleCourses[0].category : null);
 
   // Group courses by faculty
   const coursesByFaculty = eligibleCourses.reduce<Record<string, CourseInfo[]>>((acc, c) => {
@@ -35,11 +39,11 @@ export function AdmissionForm() {
   function validate(): boolean {
     const errs: Record<string, string> = {};
     if (!fullName.trim()) errs.fullName = "Full name is required";
-    if (!indexNumber.trim()) errs.indexNumber = "Index number is required";
+    if (!indexNumber.trim()) errs.indexNumber = isTvet ? "ID / Index number is required" : "Index number is required";
     if (!phoneNumber.trim()) errs.phoneNumber = "Phone number is required";
     if (!guardianName.trim()) errs.guardianName = "Parent/Guardian name is required";
     if (!guardianPhone.trim()) errs.guardianPhone = "Parent/Guardian phone is required";
-    if (!meanGrade) errs.meanGrade = "Mean grade is required";
+    if (!isTvet && !meanGrade) errs.meanGrade = "Mean grade is required";
     if (!selectedCourse) errs.selectedCourse = "Please select a course";
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -53,7 +57,7 @@ export function AdmissionForm() {
       fullName: fullName.trim(),
       indexNumber: indexNumber.trim(),
       phoneNumber: phoneNumber.trim(),
-      meanGrade: meanGrade as Grade,
+      meanGrade: (isTvet ? "N/A" : meanGrade) as Grade,
       guardianName: guardianName.trim(),
       guardianPhone: guardianPhone.trim(),
     };
@@ -66,7 +70,7 @@ export function AdmissionForm() {
       fullName: fullName.trim(),
       indexNumber: indexNumber.trim(),
       phoneNumber: phoneNumber.trim(),
-      meanGrade: meanGrade as Grade,
+      meanGrade: (isTvet ? "N/A" : meanGrade) as Grade,
       guardianName: guardianName.trim(),
       guardianPhone: guardianPhone.trim(),
     };
@@ -189,28 +193,49 @@ export function AdmissionForm() {
             </CardContent>
           </Card>
 
-          {/* Section 2: KCSE Grade & Course Selection */}
+          {/* Section 2: Programme & Course Selection */}
           <Card className="border-border/60 shadow-sm">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg text-foreground">KCSE Grade & Course Selection</CardTitle>
+              <CardTitle className="text-lg text-foreground">Programme & Course Selection</CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="space-y-2">
-                <Label>KCSE Mean Grade</Label>
-                <Select value={meanGrade} onValueChange={handleGradeChange}>
-                  <SelectTrigger><SelectValue placeholder="Select your mean grade" /></SelectTrigger>
+                <Label>Programme Type</Label>
+                <Select
+                  value={programmeType}
+                  onValueChange={(v) => {
+                    setProgrammeType(v as ProgrammeType);
+                    setSelectedCourse("");
+                    setMeanGrade("");
+                    setResult(null);
+                  }}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {grades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                    <SelectItem value="University">University Programmes (Diploma / Certificate)</SelectItem>
+                    <SelectItem value="TVET">TVET Programmes (Levels 3 – 6)</SelectItem>
                   </SelectContent>
                 </Select>
-                {errors.meanGrade && <p className="text-sm text-destructive">{errors.meanGrade}</p>}
               </div>
 
-              {meanGrade && eligibleCourses.length > 0 && (
+              {!isTvet && (
+                <div className="space-y-2">
+                  <Label>KCSE Mean Grade</Label>
+                  <Select value={meanGrade} onValueChange={handleGradeChange}>
+                    <SelectTrigger><SelectValue placeholder="Select your mean grade" /></SelectTrigger>
+                    <SelectContent>
+                      {grades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {errors.meanGrade && <p className="text-sm text-destructive">{errors.meanGrade}</p>}
+                </div>
+              )}
+
+              {eligibleCourses.length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-foreground">
-                      Eligible for: <span className="text-primary font-semibold">{category} Courses</span>
+                      {isTvet ? "Available:" : "Eligible for:"} <span className="text-primary font-semibold">{category} Courses</span>
                     </span>
                     <span className="text-xs text-muted-foreground">({eligibleCourses.length} courses available)</span>
                   </div>
@@ -235,7 +260,7 @@ export function AdmissionForm() {
                 </div>
               )}
 
-              {meanGrade && eligibleCourses.length === 0 && (
+              {!isTvet && meanGrade && eligibleCourses.length === 0 && (
                 <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4">
                   <p className="text-sm text-destructive font-medium">
                     Your KCSE mean grade ({meanGrade}) does not meet the minimum requirement (D) for admission.
@@ -247,7 +272,7 @@ export function AdmissionForm() {
 
           {/* Actions */}
           <div className="flex gap-3">
-            <Button type="submit" className="flex-1" disabled={!meanGrade || eligibleCourses.length === 0}>
+            <Button type="submit" className="flex-1" disabled={eligibleCourses.length === 0}>
               Check Eligibility
             </Button>
             <Button type="button" variant="outline" onClick={handleReset}>

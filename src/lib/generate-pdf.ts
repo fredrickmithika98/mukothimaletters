@@ -261,11 +261,17 @@ doc.text(admissionLines, margin, y);
 y += admissionLines.length * lineHeight + 3;
 
   // Second body paragraph
-  const semCount =
-    courseFees?.duration_semesters ??
-    (courseFees?.semester_fees?.length ?? (isDiploma ? 4 : 2));
-  const semestersText = semestersInWords(semCount);
-  const bodyP2 = `The program is designed to take ${semestersText}. All new students will be required to report to the University for registration and commencement of first semester studies of 2026/2027 academic year on Monday 24/08/2026.`;
+  const isTvet = result.category === "TVET";
+  let semestersText: string;
+  if (isTvet && result.duration) {
+    semestersText = result.duration.toLowerCase();
+  } else {
+    const semCount =
+      courseFees?.duration_semesters ??
+      (courseFees?.semester_fees?.length ?? (isDiploma ? 4 : 2));
+    semestersText = semestersInWords(semCount);
+  }
+  const bodyP2 = `The program is designed to take ${semestersText}. All new students will be required to report to the University for registration and commencement of first term studies of 2026/2027 academic year on Monday 24/08/2026.`;
   const p2Lines = doc.splitTextToSize(bodyP2, contentWidth);
   doc.text(p2Lines, margin, y);
   y += p2Lines.length * lineHeight + 3;
@@ -297,7 +303,22 @@ y += admissionLines.length * lineHeight + 3;
   y += lineHeight + 4;
 
 /* ================= FEE TABLE ================= */
-if (courseFees?.semester_fees && courseFees.semester_fees.length > 0) {
+if (isTvet && result.terms && result.terms.length > 0) {
+  // ===== TVET TERM-BASED FEES =====
+  const terms = result.terms;
+  const headers = [["S/N", "ITEM", ...terms.map((t) => t.label.toUpperCase())]];
+  const rows: FeeRow[] = [
+    { sn: "1", item: "Tuition & Training fee", values: terms.map((t) => fmtAmount(t.amount)) },
+  ];
+  const totals = [["", "TOTAL", ...terms.map((t) => fmtAmount(t.amount))]];
+  const snW = 10;
+  const itemW = 70;
+  const remaining = contentWidth - snW - itemW;
+  const termW = Math.max(18, Math.floor(remaining / terms.length));
+  const colWidths = [snW, itemW, ...terms.map(() => termW)];
+  y = drawTable(doc, y, headers, rows, totals, colWidths, margin);
+
+} else if (courseFees?.semester_fees && courseFees.semester_fees.length > 0) {
   // ===== CUSTOM PER-SEMESTER FEES (from admin) =====
   const sems = courseFees.semester_fees;
   const labels = sems.map((s) => s.label);

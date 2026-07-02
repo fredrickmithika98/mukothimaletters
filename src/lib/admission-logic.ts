@@ -135,6 +135,75 @@ const CERTIFICATE_COURSES: CourseInfo[] = [
   { name: "Certificate in Caregiving Level 4", faculty: FACULTY_NAMES.FHS, category: "Certificate" },
 ];
 
+// ============= TVET COURSES (Mukothima TVET) =============
+const TVET_FACULTIES = {
+  BUILD: "Faculty of Building & Construction Technology",
+  HEALTH: "Faculty of Health & Applied Sciences",
+  HOSP: "Faculty of Hospitality, Cosmetology & Fashion",
+  ENGICT: "Faculty of Engineering & ICT",
+} as const;
+
+const TERMS_L6: TermFee[] = [
+  { label: "Term 1", amount: 40500 },
+  { label: "Term 2", amount: 30000 },
+  { label: "Term 3", amount: 30000 },
+];
+const TERMS_L5: TermFee[] = [
+  { label: "Term 1", amount: 31500 },
+  { label: "Term 2", amount: 30000 },
+  { label: "Term 3", amount: 30000 },
+];
+const TERMS_L4_L3: TermFee[] = [
+  { label: "Term 1", amount: 26500 },
+  { label: "Term 2", amount: 20000 },
+];
+
+const tvet = (name: string, faculty: string, level: string, duration: string, terms: TermFee[]): CourseInfo => ({
+  name: `${name} - ${level}`,
+  faculty,
+  category: "TVET",
+  level,
+  duration,
+  terms,
+});
+
+const TVET_COURSES: CourseInfo[] = [
+  // Building & Construction
+  tvet("Building Technology", TVET_FACULTIES.BUILD, "Level 6", "2 Years", TERMS_L6),
+  tvet("Building Technology", TVET_FACULTIES.BUILD, "Level 5", "1 Year", TERMS_L5),
+  tvet("Masonry", TVET_FACULTIES.BUILD, "Level 4", "6 Months", TERMS_L4_L3),
+  tvet("Plumbing", TVET_FACULTIES.BUILD, "Level 4", "6 Months", TERMS_L4_L3),
+  tvet("Welding", TVET_FACULTIES.BUILD, "Level 4", "6 Months", TERMS_L4_L3),
+
+  // Health & Applied Sciences
+  tvet("Caregiving", TVET_FACULTIES.HEALTH, "Level 4", "6 Months", TERMS_L4_L3),
+  tvet("Community Health", TVET_FACULTIES.HEALTH, "Level 6", "2 Years", TERMS_L6),
+  tvet("Community Health", TVET_FACULTIES.HEALTH, "Level 5", "1 Year", TERMS_L5),
+  tvet("Healthcare Support Services", TVET_FACULTIES.HEALTH, "Level 5", "1 Year", TERMS_L5),
+  tvet("Mortuary Science", TVET_FACULTIES.HEALTH, "Level 5", "1 Year", TERMS_L5),
+  tvet("Perioperative Theatre Technology", TVET_FACULTIES.HEALTH, "Level 6", "2 Years", TERMS_L6),
+  tvet("Perioperative Theatre Technology", TVET_FACULTIES.HEALTH, "Level 5", "1 Year", TERMS_L5),
+
+  // Hospitality, Cosmetology & Fashion
+  tvet("Food and Beverage Management", TVET_FACULTIES.HOSP, "Level 6", "2 Years", TERMS_L6),
+  tvet("Food and Beverage Operations", TVET_FACULTIES.HOSP, "Level 5", "1 Year", TERMS_L5),
+  tvet("Cosmetology", TVET_FACULTIES.HOSP, "Level 5", "1 Year", TERMS_L5),
+  tvet("Cosmetology", TVET_FACULTIES.HOSP, "Level 4", "6 Months", TERMS_L4_L3),
+  tvet("Cosmetology", TVET_FACULTIES.HOSP, "Level 3", "3 Months", TERMS_L4_L3),
+  tvet("Fashion Design Technology", TVET_FACULTIES.HOSP, "Level 5", "1 Year", TERMS_L5),
+  tvet("Fashion Design Technology", TVET_FACULTIES.HOSP, "Level 4", "6 Months", TERMS_L4_L3),
+
+  // Engineering & ICT
+  tvet("Computer Operations", TVET_FACULTIES.ENGICT, "Level 3", "3 Months", TERMS_L4_L3),
+  tvet("Electrical Engineering", TVET_FACULTIES.ENGICT, "Level 6", "2 Years", TERMS_L6),
+  tvet("Electrical Engineering", TVET_FACULTIES.ENGICT, "Level 5", "1 Year", TERMS_L5),
+  tvet("Electrical Installation", TVET_FACULTIES.ENGICT, "Level 4", "6 Months", TERMS_L4_L3),
+];
+
+export function getTvetCourses(): CourseInfo[] {
+  return TVET_COURSES;
+}
+
 export function getEligibleCourses(meanGrade: Grade): CourseInfo[] {
   const isDiploma = isGradeAtLeast(meanGrade, "C-");
   const isCertificate = !isDiploma && isGradeAtLeast(meanGrade, "D");
@@ -145,6 +214,19 @@ export function getEligibleCourses(meanGrade: Grade): CourseInfo[] {
 }
 
 export function evaluateAdmission(data: ApplicantData, selectedCourse: CourseInfo): AdmissionResult {
+  // TVET: no grade eligibility check
+  if (selectedCourse.category === "TVET") {
+    return {
+      category: "TVET",
+      courseName: selectedCourse.name,
+      faculty: selectedCourse.faculty,
+      eligible: true,
+      level: selectedCourse.level,
+      duration: selectedCourse.duration,
+      terms: selectedCourse.terms,
+    };
+  }
+
   const courses = getEligibleCourses(data.meanGrade);
   const found = courses.find((c) => c.name === selectedCourse.name);
 

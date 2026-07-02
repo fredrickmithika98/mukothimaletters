@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 const grades = getAllGrades();
 
 export function AdmissionForm() {
+  const [programmeType, setProgrammeType] = useState<ProgrammeType>("University");
   const [fullName, setFullName] = useState("");
   const [indexNumber, setIndexNumber] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -23,8 +24,11 @@ export function AdmissionForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const eligibleCourses = meanGrade ? getEligibleCourses(meanGrade as Grade) : [];
-  const category = eligibleCourses.length > 0 ? eligibleCourses[0].category : null;
+  const isTvet = programmeType === "TVET";
+  const eligibleCourses: CourseInfo[] = isTvet
+    ? getTvetCourses()
+    : (meanGrade ? getEligibleCourses(meanGrade as Grade) : []);
+  const category = isTvet ? "TVET" : (eligibleCourses.length > 0 ? eligibleCourses[0].category : null);
 
   // Group courses by faculty
   const coursesByFaculty = eligibleCourses.reduce<Record<string, CourseInfo[]>>((acc, c) => {
@@ -35,11 +39,11 @@ export function AdmissionForm() {
   function validate(): boolean {
     const errs: Record<string, string> = {};
     if (!fullName.trim()) errs.fullName = "Full name is required";
-    if (!indexNumber.trim()) errs.indexNumber = "Index number is required";
+    if (!indexNumber.trim()) errs.indexNumber = isTvet ? "ID / Index number is required" : "Index number is required";
     if (!phoneNumber.trim()) errs.phoneNumber = "Phone number is required";
     if (!guardianName.trim()) errs.guardianName = "Parent/Guardian name is required";
     if (!guardianPhone.trim()) errs.guardianPhone = "Parent/Guardian phone is required";
-    if (!meanGrade) errs.meanGrade = "Mean grade is required";
+    if (!isTvet && !meanGrade) errs.meanGrade = "Mean grade is required";
     if (!selectedCourse) errs.selectedCourse = "Please select a course";
     setErrors(errs);
     return Object.keys(errs).length === 0;

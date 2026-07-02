@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { type Grade, type CourseInfo, type ApplicantData, type AdmissionResult, getAllGrades, getEligibleCourses, evaluateAdmission } from "@/lib/admission-logic";
+import { type Grade, type CourseInfo, type ApplicantData, type AdmissionResult, type ProgrammeType, getAllGrades, getEligibleCourses, getTvetCourses, evaluateAdmission } from "@/lib/admission-logic";
 import { generateAdmissionLetter } from "@/lib/generate-pdf";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";

@@ -193,28 +193,49 @@ export function AdmissionForm() {
             </CardContent>
           </Card>
 
-          {/* Section 2: KCSE Grade & Course Selection */}
+          {/* Section 2: Programme & Course Selection */}
           <Card className="border-border/60 shadow-sm">
             <CardHeader className="pb-4">
-              <CardTitle className="text-lg text-foreground">KCSE Grade & Course Selection</CardTitle>
+              <CardTitle className="text-lg text-foreground">Programme & Course Selection</CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="space-y-2">
-                <Label>KCSE Mean Grade</Label>
-                <Select value={meanGrade} onValueChange={handleGradeChange}>
-                  <SelectTrigger><SelectValue placeholder="Select your mean grade" /></SelectTrigger>
+                <Label>Programme Type</Label>
+                <Select
+                  value={programmeType}
+                  onValueChange={(v) => {
+                    setProgrammeType(v as ProgrammeType);
+                    setSelectedCourse("");
+                    setMeanGrade("");
+                    setResult(null);
+                  }}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {grades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                    <SelectItem value="University">University Programmes (Diploma / Certificate)</SelectItem>
+                    <SelectItem value="TVET">TVET Programmes (Levels 3 – 6)</SelectItem>
                   </SelectContent>
                 </Select>
-                {errors.meanGrade && <p className="text-sm text-destructive">{errors.meanGrade}</p>}
               </div>
 
-              {meanGrade && eligibleCourses.length > 0 && (
+              {!isTvet && (
+                <div className="space-y-2">
+                  <Label>KCSE Mean Grade</Label>
+                  <Select value={meanGrade} onValueChange={handleGradeChange}>
+                    <SelectTrigger><SelectValue placeholder="Select your mean grade" /></SelectTrigger>
+                    <SelectContent>
+                      {grades.map((g) => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {errors.meanGrade && <p className="text-sm text-destructive">{errors.meanGrade}</p>}
+                </div>
+              )}
+
+              {eligibleCourses.length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-foreground">
-                      Eligible for: <span className="text-primary font-semibold">{category} Courses</span>
+                      {isTvet ? "Available:" : "Eligible for:"} <span className="text-primary font-semibold">{category} Courses</span>
                     </span>
                     <span className="text-xs text-muted-foreground">({eligibleCourses.length} courses available)</span>
                   </div>
@@ -239,7 +260,7 @@ export function AdmissionForm() {
                 </div>
               )}
 
-              {meanGrade && eligibleCourses.length === 0 && (
+              {!isTvet && meanGrade && eligibleCourses.length === 0 && (
                 <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4">
                   <p className="text-sm text-destructive font-medium">
                     Your KCSE mean grade ({meanGrade}) does not meet the minimum requirement (D) for admission.
@@ -251,7 +272,7 @@ export function AdmissionForm() {
 
           {/* Actions */}
           <div className="flex gap-3">
-            <Button type="submit" className="flex-1" disabled={!meanGrade || eligibleCourses.length === 0}>
+            <Button type="submit" className="flex-1" disabled={eligibleCourses.length === 0}>
               Check Eligibility
             </Button>
             <Button type="button" variant="outline" onClick={handleReset}>

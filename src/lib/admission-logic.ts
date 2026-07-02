@@ -11,18 +11,29 @@ export interface ApplicantData {
   guardianPhone?: string;
 }
 
+export interface TermFee { label: string; amount: number }
+
+export type Category = "Diploma" | "Certificate" | "TVET";
+export type ProgrammeType = "University" | "TVET";
+
 export interface CourseInfo {
   name: string;
   faculty: string;
-  category: "Diploma" | "Certificate";
+  category: Category;
+  level?: string;
+  duration?: string;
+  terms?: TermFee[];
 }
 
 export interface AdmissionResult {
-  category: "Diploma" | "Certificate";
+  category: Category;
   courseName: string;
   faculty: string;
   eligible: boolean;
   reason?: string;
+  level?: string;
+  duration?: string;
+  terms?: TermFee[];
 }
 
 function gradeIndex(grade: Grade): number {

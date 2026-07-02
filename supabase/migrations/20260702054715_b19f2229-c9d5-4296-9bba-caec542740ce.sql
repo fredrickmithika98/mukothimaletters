@@ -1,0 +1,2 @@
+ALTER TABLE public.admission_downloads DROP CONSTRAINT admission_downloads_category_check;
+ALTER TABLE public.admission_downloads ADD CONSTRAINT admission_downloads_category_check CHECK (category = ANY (ARRAY['Diploma'::text, 'Certificate'::text, 'TVET'::text]));

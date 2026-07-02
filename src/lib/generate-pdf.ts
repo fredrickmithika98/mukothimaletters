@@ -303,7 +303,22 @@ y += admissionLines.length * lineHeight + 3;
   y += lineHeight + 4;
 
 /* ================= FEE TABLE ================= */
-if (courseFees?.semester_fees && courseFees.semester_fees.length > 0) {
+if (isTvet && result.terms && result.terms.length > 0) {
+  // ===== TVET TERM-BASED FEES =====
+  const terms = result.terms;
+  const headers = [["S/N", "ITEM", ...terms.map((t) => t.label.toUpperCase())]];
+  const rows: FeeRow[] = [
+    { sn: "1", item: "Tuition & Training fee", values: terms.map((t) => fmtAmount(t.amount)) },
+  ];
+  const totals = [["", "TOTAL", ...terms.map((t) => fmtAmount(t.amount))]];
+  const snW = 10;
+  const itemW = 70;
+  const remaining = contentWidth - snW - itemW;
+  const termW = Math.max(18, Math.floor(remaining / terms.length));
+  const colWidths = [snW, itemW, ...terms.map(() => termW)];
+  y = drawTable(doc, y, headers, rows, totals, colWidths, margin);
+
+} else if (courseFees?.semester_fees && courseFees.semester_fees.length > 0) {
   // ===== CUSTOM PER-SEMESTER FEES (from admin) =====
   const sems = courseFees.semester_fees;
   const labels = sems.map((s) => s.label);

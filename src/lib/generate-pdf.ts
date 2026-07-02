@@ -426,7 +426,7 @@ doc.setFont("times", "bold");
 doc.setFontSize(10);
 
 const payIntro =
-  "All students MUST pay the required 2000 non-refundable admission fees through Government E-CITIZEN platform:";
+  "All students MUST pay the required 2000 non-refundable admission fees through Government E-CITIZEN platform Business No. 222222 Ac No. APPF-Name:";
 
 const piLines = doc.splitTextToSize(payIntro, contentWidth);
 doc.text(piLines, margin, y);
@@ -483,7 +483,7 @@ doc.setFontSize(10);
 doc.setTextColor(0, 51, 153); // strong blue
 
 const contact =
-  "If you accept the offer under these conditions, contact Mobile No. 0720021155 - Dr. Faustine Muchui. to formalize your admission.";
+  "";
 
 const ctLines = doc.splitTextToSize(contact, contentWidth);
 doc.text(ctLines, margin, y);

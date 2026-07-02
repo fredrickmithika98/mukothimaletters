@@ -261,11 +261,17 @@ doc.text(admissionLines, margin, y);
 y += admissionLines.length * lineHeight + 3;
 
   // Second body paragraph
-  const semCount =
-    courseFees?.duration_semesters ??
-    (courseFees?.semester_fees?.length ?? (isDiploma ? 4 : 2));
-  const semestersText = semestersInWords(semCount);
-  const bodyP2 = `The program is designed to take ${semestersText}. All new students will be required to report to the University for registration and commencement of first semester studies of 2026/2027 academic year on Monday 24/08/2026.`;
+  const isTvet = result.category === "TVET";
+  let semestersText: string;
+  if (isTvet && result.duration) {
+    semestersText = result.duration.toLowerCase();
+  } else {
+    const semCount =
+      courseFees?.duration_semesters ??
+      (courseFees?.semester_fees?.length ?? (isDiploma ? 4 : 2));
+    semestersText = semestersInWords(semCount);
+  }
+  const bodyP2 = `The program is designed to take ${semestersText}. All new students will be required to report to the University for registration and commencement of first term studies of 2026/2027 academic year on Monday 24/08/2026.`;
   const p2Lines = doc.splitTextToSize(bodyP2, contentWidth);
   doc.text(p2Lines, margin, y);
   y += p2Lines.length * lineHeight + 3;

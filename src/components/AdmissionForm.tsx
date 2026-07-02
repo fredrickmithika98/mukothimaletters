@@ -70,7 +70,7 @@ export function AdmissionForm() {
       fullName: fullName.trim(),
       indexNumber: indexNumber.trim(),
       phoneNumber: phoneNumber.trim(),
-      meanGrade: meanGrade as Grade,
+      meanGrade: (isTvet ? "N/A" : meanGrade) as Grade,
       guardianName: guardianName.trim(),
       guardianPhone: guardianPhone.trim(),
     };
